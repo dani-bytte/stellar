@@ -1,12 +1,14 @@
+// pages/home/admin/register-info.tsx
+
 'use client';
 
-import * as React from 'react';
+import React from 'react';
 import { useRouter } from 'next/navigation';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Form,
   FormControl,
@@ -15,163 +17,107 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Card } from '@/components/ui/card'; // Importe o componente Card
 
-const currentYear = new Date().getFullYear();
+// Schema de Validação para Registro de Informações de Perfil
+const registerInfoSchema = z.object({
+  fullName: z
+    .string()
+    .min(2, 'O nome completo deve ter pelo menos 2 caracteres.'),
+  nickname: z.string().min(2, 'O apelido deve ter pelo menos 2 caracteres.'),
+  birthDay: z.number().min(1, 'Selecione o dia.'),
+  birthMonth: z.number().min(1, 'Selecione o mês.'),
+  birthYear: z
+    .number()
+    .min(1900, 'Ano inválido.')
+    .max(new Date().getFullYear(), 'Ano inválido.'),
+  pixKey: z.string().min(1, 'A chave PIX é obrigatória.'),
+  whatsapp: z.string().min(1, 'O número do WhatsApp é obrigatório.'),
+  email: z.string().email('Endereço de e-mail inválido.'),
+});
 
-const formSchema = z
-  .object({
-    fullName: z.string().min(2, {
-      message: 'O nome completo deve ter pelo menos 2 caracteres.',
-    }),
-    nickname: z.string().min(2, {
-      message: 'O apelido deve ter pelo menos 2 caracteres.',
-    }),
-    birthDay: z.number().min(1, {
-      message: 'Selecione o dia.',
-    }),
-    birthMonth: z.number().min(1, {
-      message: 'Selecione o mês.',
-    }),
-    birthYear: z
-      .number()
-      .min(currentYear - 59)
-      .max(currentYear, {
-        message: 'Ano inválido.',
-      }),
-    pixKey: z.string().min(1, {
-      message: 'A chave PIX é obrigatória.',
-    }),
-    whatsapp: z.string().min(1, {
-      message: 'O número do WhatsApp é obrigatório.',
-    }),
-    email: z.string().email({
-      message: 'Endereço de e-mail inválido.',
-    }),
-  })
-  .refine(
-    (data) => {
-      const { birthDay, birthMonth, birthYear } = data;
-      const date = new Date(birthYear, birthMonth - 1, birthDay);
-      return (
-        date.getFullYear() === birthYear &&
-        date.getMonth() + 1 === birthMonth &&
-        date.getDate() === birthDay
-      );
-    },
-    {
-      message: 'Data de nascimento inválida.',
-      path: ['birthDay'],
-    }
-  );
+type RegisterInfoFormValues = z.infer<typeof registerInfoSchema>;
 
-export default function ProfilePage() {
+export default function RegisterInfoPage() {
   const router = useRouter();
-  const [dayOptions, setDayOptions] = React.useState<number[]>([]);
-  const form = useForm({
-    resolver: zodResolver(formSchema),
+
+  // Configuração do React Hook Form para Registro de Informações de Perfil
+  const registerInfoForm = useForm<RegisterInfoFormValues>({
+    resolver: zodResolver(registerInfoSchema),
     defaultValues: {
       fullName: '',
       nickname: '',
-      birthDay: 0,
-      birthMonth: 0,
-      birthYear: 0,
+      birthDay: 1,
+      birthMonth: 1,
+      birthYear: 2000,
       pixKey: '',
       whatsapp: '',
       email: '',
     },
   });
 
-  type FormValues = {
-    fullName: string;
-    nickname: string;
-    birthDay: number;
-    birthMonth: number;
-    birthYear: number;
-    pixKey: string;
-    whatsapp: string;
-    email: string;
-  };
-
-  // Função para calcular o número de dias no mês selecionado
-  const calculateDaysInMonth = (year: number, month: number) => {
-    return new Date(year, month, 0).getDate();
-  };
-
-  // Observar as mudanças nos campos birthMonth e birthYear
-  const birthMonth = form.watch('birthMonth');
-  const birthYear = form.watch('birthYear');
-
-  // Atualizar as opções de dias sempre que o mês ou o ano forem alterados
-  React.useEffect(() => {
-    if (birthMonth && birthYear) {
-      const daysInMonth = calculateDaysInMonth(birthYear, birthMonth);
-      const daysArray = Array.from({ length: daysInMonth }, (_, i) => i + 1);
-      setDayOptions(daysArray);
-
-      // Se o dia selecionado for maior que o número de dias no mês, limpar o campo birthDay
-      const currentDay = form.getValues('birthDay');
-      if (currentDay && currentDay > daysInMonth) {
-        form.setValue('birthDay', 0);
-      }
-    } else {
-      setDayOptions([]);
-    }
-  }, [birthMonth, birthYear, form]);
-
-  const onSubmit = async (values: FormValues) => {
+  // Função para lidar com o registro de informações de perfil
+  const handleRegisterInfo = async (values: RegisterInfoFormValues) => {
     try {
-      const birthDate = new Date(
-        values.birthYear,
-        values.birthMonth - 1,
-        values.birthDay
-      );
       const token = localStorage.getItem('token');
+
       if (!token) {
-        throw new Error('Token não encontrado');
+        registerInfoForm.setError('root', {
+          message: 'Token não encontrado. Por favor, faça login novamente.',
+        });
+        return;
       }
 
       const response = await fetch('/api/home/admin/register-info', {
+        // Verifique se o endpoint está correto no backend
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ ...values, birthDate: birthDate.toISOString() }),
+        body: JSON.stringify(values),
       });
 
-      if (!response.ok) {
-        throw new Error('Falha ao salvar o perfil');
+      const data = await response.json();
+
+      if (response.ok) {
+        // Informar o usuário sobre o sucesso ou redirecionar para uma página específica
+        router.push('/home'); // Redireciona para a página inicial ou dashboard
+      } else {
+        // Define um erro global no formulário de registro de informações de perfil
+        registerInfoForm.setError('root', { message: data.error });
       }
-      router.push('/auth/profile');
-    } catch {
-      console.error('Falha ao salvar o perfil. Por favor, tente novamente.');
-      form.setError('root', {
-        type: 'manual',
-        message: 'Falha ao salvar o perfil. Por favor, tente novamente.',
+    } catch (error) {
+      console.error('Erro ao registrar informações de perfil:', error);
+      registerInfoForm.setError('root', {
+        message:
+          'Erro ao registrar informações de perfil. Por favor, tente novamente.',
       });
     }
   };
 
   return (
-    <div className="flex flex-1 flex-col gap-4 px-4 py-10">
-      <div className="mx-auto h-24 w-full max-w-3xl flex items-center justify-center">
-        <h3 className="text-xl font-semibold mb-4">Perfil do Usuário</h3>
-      </div>
-
-      <div className="mx-auto h-full w-full max-w-3xl p-6">
-        <h3 className="text-xl font-semibold mb-4">Complete Seu Perfil</h3>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+    <div className="flex items-center justify-center min-h-screen py-2">
+      <Card className="w-full max-w-md p-6 shadow-lg">
+        <h2 className="text-2xl font-semibold mb-4 text-center">
+          Registro de Informações de Perfil
+        </h2>
+        <Form {...registerInfoForm}>
+          <form
+            onSubmit={registerInfoForm.handleSubmit(handleRegisterInfo)}
+            className="space-y-6"
+            autoComplete="off" // Previne preenchimento automático
+          >
             <FormField
-              control={form.control}
+              control={registerInfoForm.control}
               name="fullName"
               render={({ field }) => (
                 <FormItem>
@@ -184,7 +130,7 @@ export default function ProfilePage() {
               )}
             />
             <FormField
-              control={form.control}
+              control={registerInfoForm.control}
               name="nickname"
               render={({ field }) => (
                 <FormItem>
@@ -196,30 +142,33 @@ export default function ProfilePage() {
                 </FormItem>
               )}
             />
-
-            {/* Campos para Dia, Mês e Ano */}
             <div className="flex flex-wrap gap-4">
+              {/* Campo Dia */}
               <FormField
-                control={form.control}
+                control={registerInfoForm.control}
                 name="birthDay"
                 render={({ field }) => (
                   <FormItem className="w-24">
                     <FormLabel>Dia</FormLabel>
                     <FormControl>
                       <Select
+                        value={field.value.toString()}
                         onValueChange={(value) => field.onChange(Number(value))}
-                        value={field.value ? field.value.toString() : ''}
-                        disabled={!birthMonth || !birthYear}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="w-full">
                           <SelectValue placeholder="Dia" />
                         </SelectTrigger>
                         <SelectContent>
-                          {dayOptions.map((day) => (
-                            <SelectItem key={day} value={day.toString()}>
-                              {day}
-                            </SelectItem>
-                          ))}
+                          <SelectGroup>
+                            {[...Array(31)].map((_, i) => (
+                              <SelectItem
+                                key={i + 1}
+                                value={(i + 1).toString()}
+                              >
+                                {i + 1}
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
                         </SelectContent>
                       </Select>
                     </FormControl>
@@ -227,31 +176,41 @@ export default function ProfilePage() {
                   </FormItem>
                 )}
               />
+              {/* Campo Mês */}
               <FormField
-                control={form.control}
+                control={registerInfoForm.control}
                 name="birthMonth"
                 render={({ field }) => (
                   <FormItem className="w-32">
                     <FormLabel>Mês</FormLabel>
                     <FormControl>
                       <Select
-                        onValueChange={(value) => {
-                          field.onChange(Number(value));
-                          form.trigger('birthDay'); // Revalidar o dia
-                        }}
-                        value={field.value ? field.value.toString() : ''}
+                        value={field.value.toString()}
+                        onValueChange={(value) => field.onChange(Number(value))}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="w-full">
                           <SelectValue placeholder="Mês" />
                         </SelectTrigger>
                         <SelectContent>
-                          {[...Array(12)].map((_, i) => (
-                            <SelectItem key={i + 1} value={(i + 1).toString()}>
-                              {new Date(0, i).toLocaleString('default', {
-                                month: 'long',
-                              })}
-                            </SelectItem>
-                          ))}
+                          <SelectGroup>
+                            {[...Array(12)].map((_, i) => {
+                              const month = new Date(0, i).toLocaleString(
+                                'default',
+                                {
+                                  month: 'long',
+                                }
+                              );
+                              return (
+                                <SelectItem
+                                  key={i + 1}
+                                  value={(i + 1).toString()}
+                                >
+                                  {month.charAt(0).toUpperCase() +
+                                    month.slice(1)}
+                                </SelectItem>
+                              );
+                            })}
+                          </SelectGroup>
                         </SelectContent>
                       </Select>
                     </FormControl>
@@ -259,32 +218,34 @@ export default function ProfilePage() {
                   </FormItem>
                 )}
               />
+              {/* Campo Ano */}
               <FormField
-                control={form.control}
+                control={registerInfoForm.control}
                 name="birthYear"
                 render={({ field }) => (
                   <FormItem className="w-32">
                     <FormLabel>Ano</FormLabel>
                     <FormControl>
                       <Select
-                        onValueChange={(value) => {
-                          field.onChange(Number(value));
-                          form.trigger('birthDay'); // Revalidar o dia
-                        }}
-                        value={field.value ? field.value.toString() : ''}
+                        value={field.value.toString()}
+                        onValueChange={(value) => field.onChange(Number(value))}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="w-full">
                           <SelectValue placeholder="Ano" />
                         </SelectTrigger>
                         <SelectContent>
-                          {Array.from({ length: 60 }, (_, i) => (
-                            <SelectItem
-                              key={currentYear - i}
-                              value={(currentYear - i).toString()}
-                            >
-                              {currentYear - i}
-                            </SelectItem>
-                          ))}
+                          <SelectGroup>
+                            {Array.from(
+                              { length: new Date().getFullYear() - 1900 + 1 },
+                              (_, i) => 1900 + i
+                            )
+                              .reverse()
+                              .map((year) => (
+                                <SelectItem key={year} value={year.toString()}>
+                                  {year}
+                                </SelectItem>
+                              ))}
+                          </SelectGroup>
                         </SelectContent>
                       </Select>
                     </FormControl>
@@ -293,9 +254,8 @@ export default function ProfilePage() {
                 )}
               />
             </div>
-
             <FormField
-              control={form.control}
+              control={registerInfoForm.control}
               name="pixKey"
               render={({ field }) => (
                 <FormItem>
@@ -308,7 +268,7 @@ export default function ProfilePage() {
               )}
             />
             <FormField
-              control={form.control}
+              control={registerInfoForm.control}
               name="whatsapp"
               render={({ field }) => (
                 <FormItem>
@@ -324,7 +284,7 @@ export default function ProfilePage() {
               )}
             />
             <FormField
-              control={form.control}
+              control={registerInfoForm.control}
               name="email"
               render={({ field }) => (
                 <FormItem>
@@ -340,17 +300,17 @@ export default function ProfilePage() {
                 </FormItem>
               )}
             />
-            {form.formState.errors.root && (
+            {registerInfoForm.formState.errors.root && (
               <p className="text-red-500 text-sm">
-                {form.formState.errors.root.message}
+                {registerInfoForm.formState.errors.root.message}
               </p>
             )}
             <Button type="submit" className="w-full">
-              Salvar
+              Salvar Informações
             </Button>
           </form>
         </Form>
-      </div>
+      </Card>
     </div>
   );
 }

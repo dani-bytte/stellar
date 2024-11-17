@@ -1,105 +1,140 @@
 'use client';
 
-import * as React from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
-  Button,
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-  Input,
-  Label,
-} from '@/components/ui';
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Card, CardHeader, CardContent } from '@/components/ui/card';
 
-export default function Login() {
-  const [username, setUsername] = React.useState('');
-  const [password, setPassword] = React.useState('');
-  const [error, setError] = React.useState('');
+// Schema de Validação para Login
+const loginSchema = z.object({
+  username: z.string().min(1, 'Username é obrigatório'),
+  password: z.string().min(1, 'Senha é obrigatória'),
+});
+
+type LoginFormValues = z.infer<typeof loginSchema>;
+
+export default function LoginPage() {
   const router = useRouter();
+  const [, setUsername] = useState('');
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
+  // Configuração do React Hook Form para Login
+  const loginForm = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      username: '',
+      password: '',
+    },
+  });
 
+  // Função para lidar com o login
+  const handleLogin = async (values: LoginFormValues) => {
     try {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, password }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(values),
       });
 
-      if (!response.ok) {
-        throw new Error('Login failed');
-      }
-
       const data = await response.json();
-      const { token, role } = data;
-      // Armazene o token no localStorage ou em um cookie
-      localStorage.setItem('role', role);
-      localStorage.setItem('token', token);
 
-      // Redirecione o usuário com base na role
-      if (role === 'admin') {
-        router.push('/admin');
+      if (response.ok) {
+        const { token, role, isTemporaryPassword } = data;
+        localStorage.setItem('token', token);
+        localStorage.setItem('role', role);
+        setUsername(values.username);
+
+        if (isTemporaryPassword) {
+          // Redireciona para a página de alteração de senha
+          router.push('/auth/password');
+        } else {
+          // Redireciona com base no role do usuário
+          router.push(role === 'admin' ? '/admin' : '/home');
+        }
       } else {
-        router.push('/home');
+        // Define um erro global no formulário de login
+        loginForm.setError('root', { message: data.error });
       }
     } catch (error) {
-      setError('Invalid credentials. Please try again.');
+      console.error('Erro ao fazer login:', error);
+      loginForm.setError('root', {
+        message: 'Erro ao fazer login. Por favor, tente novamente.',
+      });
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen">
-      <Card className="w-full max-w-md p-8">
+    <div className="flex flex-col items-center justify-center min-h-screen py-2">
+      <Card className="w-full max-w-md p-6">
         <CardHeader>
-          <CardTitle className="text-2xl font-semibold text-center">
+          <h2 className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0">
             Login
-          </CardTitle>
-          <CardDescription className="text-center">
-            Please enter your credentials to login
-          </CardDescription>
+          </h2>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleLogin} className="flex flex-col gap-4">
-            <div className="flex flex-col space-y-1.5">
-              <Label htmlFor="username">Username</Label>
-              <Input
-                type="text"
-                id="username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
-                placeholder="Enter your username"
+          <Form {...loginForm}>
+            <form
+              onSubmit={loginForm.handleSubmit(handleLogin)}
+              className="space-y-6"
+              autoComplete="off" // Previne preenchimento automático no formulário de login
+            >
+              <FormField
+                control={loginForm.control}
+                name="username"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Username</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Digite seu username"
+                        autoComplete="username" // Define o autocomplete correto
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            <div className="flex flex-col space-y-1.5">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                type="password"
-                id="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                placeholder="Enter your password"
+              <FormField
+                control={loginForm.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Senha</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        placeholder="Digite sua senha"
+                        autoComplete="current-password" // Define o autocomplete correto
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            {error && <p className="text-red-500 text-sm">{error}</p>}
-            <Button type="submit" className="w-full">
-              Login
-            </Button>
-          </form>
+              {loginForm.formState.errors.root && (
+                <p className="text-red-500 text-sm">
+                  {loginForm.formState.errors.root.message}
+                </p>
+              )}
+              <Button type="submit" className="w-full">
+                Login
+              </Button>
+            </form>
+          </Form>
         </CardContent>
-        <CardFooter className="text-center">
-          <a href="#" className="text-sm hover:underline">
-            Forgot your password?
-          </a>
-        </CardFooter>
       </Card>
     </div>
   );

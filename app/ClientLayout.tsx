@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useLayoutEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui';
 import { AppSidebar } from '@/components/ui/app-sidebar';
@@ -13,6 +13,31 @@ export default function ClientLayout({
   const router = useRouter();
   const pathname = usePathname();
   const isLoginPage = pathname === '/auth/login';
+  const isPasswordPage = pathname === '/auth/password';
+  const isProfilePage = pathname === '/auth/profile';
+
+  useLayoutEffect(() => {
+    const handleDOMReady = () => {
+      const inputs = document.querySelectorAll('input');
+      inputs.forEach((input) => {
+        input.addEventListener('animationstart', (e) => {
+          if (e.animationName.includes('autofill')) {
+            // Handle autofill here
+          }
+        });
+      });
+    };
+
+    if (document.readyState === 'complete') {
+      handleDOMReady();
+    } else {
+      window.addEventListener('load', handleDOMReady);
+    }
+
+    return () => {
+      window.removeEventListener('load', handleDOMReady);
+    };
+  }, []);
 
   useEffect(() => {
     const checkToken = async () => {
@@ -23,20 +48,35 @@ export default function ClientLayout({
       }
 
       try {
-        const response = await fetch('/api/auth/validate-token/', {
+        const response = await fetch('/api/auth/validate-token', {
           method: 'GET',
           headers: {
-            'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
           },
         });
 
-        if (response.status === 401) {
-          router.push('/auth/login');
+        if (!response.ok) {
+          if (response.status === 401) {
+            const data = await response.json();
+            if (
+              data.message ===
+              'Token expirado. Por favor, faça login novamente.'
+            ) {
+              localStorage.removeItem('token');
+              router.push('/auth/login');
+            } else if (data.message === 'Token inválido.') {
+              localStorage.removeItem('token');
+              router.push('/auth/login');
+            } else {
+              console.error('Erro de autenticação:', data.message);
+            }
+          } else {
+            router.push('/auth/login');
+            console.error('Erro ao validar o token:', response.status);
+          }
         }
       } catch (error) {
-        console.error('Failed to verify token:', error);
-        router.push('/auth/login');
+        console.error('Erro ao validar o token:', error);
       }
     };
 
@@ -45,7 +85,7 @@ export default function ClientLayout({
 
   return (
     <>
-      {isLoginPage ? (
+      {isLoginPage || isPasswordPage || isProfilePage ? (
         <main>{children}</main>
       ) : (
         <SidebarProvider>

@@ -16,9 +16,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Label } from '@/components/ui';
 
 // Registrar os componentes do Chart.js
 Chart.register(
@@ -269,24 +271,31 @@ export default function Admin() {
           <DialogContent className="max-w-[400px] w-full max-h-[80vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Detalhes</DialogTitle>
+              <DialogDescription></DialogDescription>
             </DialogHeader>
             {selectedCardData && selectedCardData.length > 0 ? (
               selectedCardData.map((item) => (
                 <div key={item.ticket} className="mb-4">
-                  <p>
-                    <strong>Ticket:</strong> {item.ticket}
-                  </p>
-                  <p>
-                    <strong>Usuário:</strong> {item.createdBy.username}
-                  </p>
-                  <p>
-                    <strong>Data de Término:</strong>{' '}
-                    {new Date(item.endDate).toLocaleDateString()}
-                  </p>
+                  <Label>
+                    <p>
+                      <strong>Ticket:</strong> {item.ticket}
+                    </p>
+                  </Label>
+                  <Label>
+                    <p>
+                      <strong>Usuário:</strong> {item.createdBy.username}
+                    </p>
+                  </Label>
+                  <Label>
+                    <p>
+                      <strong>Data de Término:</strong>{' '}
+                      {new Date(item.endDate).toLocaleDateString()}
+                    </p>
+                  </Label>
                 </div>
               ))
             ) : (
-              <p>Nenhum dado disponível.</p>
+              <Label>Nenhum dado disponível.</Label>
             )}
           </DialogContent>
         </Dialog>
