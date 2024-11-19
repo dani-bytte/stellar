@@ -50,7 +50,8 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (response.ok) {
-        const { token, role, isTemporaryPassword } = data;
+        const { token, role, isTemporaryPassword, hasProfile } = data;
+        console.log('Login efetuado com sucesso:', data);
         localStorage.setItem('token', token);
         localStorage.setItem('role', role);
         setUsername(values.username);
@@ -58,6 +59,9 @@ export default function LoginPage() {
         if (isTemporaryPassword) {
           // Redireciona para a página de alteração de senha
           router.push('/auth/password');
+        } else if (!hasProfile) {
+          // Redireciona para a página de completar perfil
+          router.push('/auth/profile');
         } else {
           // Redireciona com base no role do usuário
           router.push(role === 'admin' ? '/admin' : '/home');

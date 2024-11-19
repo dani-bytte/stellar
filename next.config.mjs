@@ -21,6 +21,9 @@ const nextConfig = {
     // Remova a alteração do devtool para evitar problemas de desempenho
     return config;
   },
+  images: {
+    domains: ['minios3.muonityzone.top'],
+  },
 };
 
 export default nextConfig;

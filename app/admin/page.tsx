@@ -283,13 +283,16 @@ export default function Admin() {
                   </Label>
                   <Label>
                     <p>
-                      <strong>Usuário:</strong> {item.createdBy.username}
+                      <strong>Usuário:</strong>{' '}
+                      {item.createdBy?.username || 'N/A'}
                     </p>
                   </Label>
                   <Label>
                     <p>
                       <strong>Data de Término:</strong>{' '}
-                      {new Date(item.endDate).toLocaleDateString()}
+                      {item.endDate
+                        ? new Date(item.endDate).toLocaleDateString()
+                        : 'N/A'}
                     </p>
                   </Label>
                 </div>

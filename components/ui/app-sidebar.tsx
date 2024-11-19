@@ -2,9 +2,7 @@
 
 import * as React from 'react';
 import {
-  AudioWaveform,
   Bot,
-  Command,
   GalleryVerticalEnd,
   Settings2,
   SquareTerminal,
@@ -74,19 +72,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     },
     teams: [
       {
-        name: 'Acme Inc',
+        name: 'Stellar',
         logo: GalleryVerticalEnd,
         plan: 'Enterprise',
-      },
-      {
-        name: 'Acme Corp.',
-        logo: AudioWaveform,
-        plan: 'Startup',
-      },
-      {
-        name: 'Evil Corp.',
-        logo: Command,
-        plan: 'Free',
       },
     ],
     navMain: [
@@ -98,11 +86,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         items: [
           {
             title: 'History',
-            url: '/tickets',
-          },
-          {
-            title: 'New Ticket',
-            url: '/tickets/new',
+            url: '/home/ticket',
           },
         ],
       },
@@ -118,10 +102,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           {
             title: 'Users',
             url: '/admin/users',
-          },
-          {
-            title: 'New User',
-            url: '/admin/users/new',
           },
         ],
       },

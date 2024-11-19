@@ -27,7 +27,7 @@ import {
 } from '@/components/ui/select';
 import { Card } from '@/components/ui/card'; // Importe o componente Card
 
-// Schema de Validação para Registro de Informações de Perfil
+// Update the schema to match ProfileUser model
 const registerInfoSchema = z.object({
   fullName: z
     .string()
@@ -64,7 +64,7 @@ export default function RegisterInfoPage() {
     },
   });
 
-  // Função para lidar com o registro de informações de perfil
+  // Update the handleRegisterInfo function
   const handleRegisterInfo = async (values: RegisterInfoFormValues) => {
     try {
       const token = localStorage.getItem('token');
@@ -76,23 +76,38 @@ export default function RegisterInfoPage() {
         return;
       }
 
-      const response = await fetch('/api/home/admin/register-info', {
-        // Verifique se o endpoint está correto no backend
+      // Format the date fields into a single ISO date string
+      const birthDate = new Date(
+        values.birthYear,
+        values.birthMonth - 1, // JavaScript months are 0-based
+        values.birthDay
+      ).toISOString();
+
+      // Create the payload matching the ProfileUser model
+      const payload = {
+        fullName: values.fullName,
+        nickname: values.nickname,
+        birthDate: birthDate,
+        pixKey: values.pixKey,
+        whatsapp: values.whatsapp,
+        email: values.email,
+      };
+
+      const response = await fetch('/api/home/profile', {
+        // Update endpoint to match backend
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(values),
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        // Informar o usuário sobre o sucesso ou redirecionar para uma página específica
-        router.push('/home'); // Redireciona para a página inicial ou dashboard
+        router.push('/home');
       } else {
-        // Define um erro global no formulário de registro de informações de perfil
         registerInfoForm.setError('root', { message: data.error });
       }
     } catch (error) {
