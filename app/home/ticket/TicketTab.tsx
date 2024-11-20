@@ -45,6 +45,15 @@ import {
 } from '@/components/ui/dialog';
 
 import Image from 'next/image';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { Label } from '@/components/ui';
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue,
+} from '@/components/ui/select';
 
 // Ticket type definition
 type Ticket = {
@@ -67,33 +76,49 @@ type Ticket = {
   };
 };
 
+type Service = {
+  _id: string;
+  name: string;
+  dueDate: number;
+};
+
+type NewTicket = {
+  ticket: string;
+  serviceId: string;
+  client: string;
+  email: string;
+  startDate: string;
+  endDate: string;
+  proof: File | null;
+};
+
 export function TicketTable() {
   const { toast } = useToast();
-  const [data, setData] = React.useState<Ticket[]>([]);
-  const [loading, setLoading] = React.useState<boolean>(true);
-  const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
-  );
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({
-      'service.name': false,
-      startDate: false,
-      'createdBy.username': true,
-    });
-  const [dialogOpen, setDialogOpen] = React.useState(false);
-  const [proofUrl, setProofUrl] = React.useState<string | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = React.useState(false);
-  const [newTicket, setNewTicket] = React.useState({
+  const [data, setData] = useState<Ticket[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
+    service_name: false,
+    startDate: false,
+  });
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [proofUrl, setProofUrl] = useState<string | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [newTicket, setNewTicket] = useState<NewTicket>({
     ticket: '',
     serviceId: '',
     client: '',
     email: '',
     startDate: '',
     endDate: '',
+    proof: null,
   });
 
-  const fetchTickets = React.useCallback(async () => {
+  const isMounted = useRef(false);
+
+  const fetchTickets = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
       const response = await fetch('/api/tickets', {
@@ -102,6 +127,9 @@ export function TicketTable() {
         },
       });
       const tickets = await response.json();
+
+      console.log('Tickets recebidos:', tickets); // Adicione este log
+
       setData(tickets);
     } catch (error) {
       console.error('Error fetching tickets:', error);
@@ -115,25 +143,65 @@ export function TicketTable() {
     }
   }, [toast]);
 
-  React.useEffect(() => {
-    fetchTickets();
-  }, [fetchTickets]);
+  const fetchServices = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/tickets/services', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const services = await response.json();
+
+      console.log('Services recebidos:', services); // Adicione este log
+
+      setServices(services);
+    } catch (error) {
+      console.error('Error fetching services:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load services',
+        variant: 'destructive',
+      });
+    }
+  }, [toast]);
+
+  useEffect(() => {
+    if (!isMounted.current) {
+      fetchTickets();
+      fetchServices();
+      isMounted.current = true;
+    }
+  }, [fetchTickets, fetchServices]);
 
   const handleCreateTicket = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('/api/tickets', {
+      const formData = new FormData();
+      formData.append('ticket', newTicket.ticket);
+      formData.append('serviceId', newTicket.serviceId);
+      formData.append('client', newTicket.client);
+      formData.append('email', newTicket.email);
+      formData.append('startDate', newTicket.startDate);
+      formData.append('endDate', newTicket.endDate);
+      if (newTicket.proof) {
+        formData.append('proof', newTicket.proof);
+      }
+
+      const response = await fetch('/api/tickets/new', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(newTicket),
+        body: formData,
       });
 
       if (!response.ok) {
         throw new Error('Failed to create ticket');
       }
+
+      const result = await response.json();
+      console.log('Ticket criado:', result);
 
       setIsDialogOpen(false);
       setNewTicket({
@@ -143,6 +211,7 @@ export function TicketTable() {
         email: '',
         startDate: '',
         endDate: '',
+        proof: null,
       });
       await fetchTickets();
 
@@ -158,6 +227,29 @@ export function TicketTable() {
         variant: 'destructive',
       });
     }
+  };
+
+  const handleServiceChange = (value: string) => {
+    setNewTicket({ ...newTicket, serviceId: value });
+  };
+
+  const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const startDateStr = e.target.value;
+    const selectedService = services.find((s) => s._id === newTicket.serviceId);
+    let endDateStr = newTicket.endDate;
+
+    if (selectedService && startDateStr) {
+      const startDate = new Date(startDateStr);
+      const endDate = new Date(startDate);
+      endDate.setDate(endDate.getDate() + selectedService.dueDate);
+      endDateStr = endDate.toISOString().split('T')[0];
+    }
+
+    setNewTicket({
+      ...newTicket,
+      startDate: startDateStr,
+      endDate: endDateStr,
+    });
   };
 
   const columns: ColumnDef<Ticket>[] = [
@@ -258,10 +350,13 @@ export function TicketTable() {
       },
     },
     {
-      accessorKey: 'createdBy.username',
+      accessorKey: 'createdBy', // Change this line
       header: 'Criado Por',
       cell: ({ row }) => {
-        return row.getValue('createdBy.username') as string;
+        const createdBy = row.getValue('createdBy') as {
+          username: string;
+        } | null;
+        return createdBy?.username || 'none';
       },
       enableSorting: false,
       enableHiding: true,
@@ -271,41 +366,40 @@ export function TicketTable() {
       cell: ({ row }) => {
         const ticket = row.original;
 
-        const handleViewProof = async () => {
+        const handleViewProof = async (ticket: Ticket) => {
           if (!ticket.proofUrl) return;
 
           try {
             const token = localStorage.getItem('token');
             const encodedFileName = encodeURIComponent(ticket.proofUrl);
 
+            // Faça uma requisição para o endpoint que retorna a imagem
             const response = await fetch(
-              `/api/tickets/proof-url/${encodedFileName}`,
+              `/api/tickets/proof-image/${encodedFileName}`,
               {
                 method: 'GET',
                 headers: {
-                  Accept: 'application/json',
                   Authorization: `Bearer ${token}`,
                 },
               }
             );
 
-            if (!response.ok) throw new Error('Failed to get URL');
-
-            const data = await response.json();
-            console.log('Signed URL:', data.signedUrl);
-
-            // Verify that data.signedUrl is a string
-            if (typeof data.signedUrl === 'string') {
-              setProofUrl(data.signedUrl);
-              setDialogOpen(true);
-            } else {
-              throw new Error('Invalid signed URL');
+            if (!response.ok) {
+              throw new Error('Erro ao carregar a imagem');
             }
+
+            // Crie um blob da imagem
+            const blob = await response.blob();
+            const imageUrl = URL.createObjectURL(blob);
+
+            // Exiba a imagem no dialog
+            setProofUrl(imageUrl);
+            setDialogOpen(true);
           } catch (error) {
-            console.error('Error:', error);
+            console.error('Erro:', error);
             toast({
-              title: 'Error',
-              description: 'Failed to open proof document',
+              title: 'Erro',
+              description: 'Falha ao abrir o comprovante',
               variant: 'destructive',
             });
           }
@@ -326,7 +420,7 @@ export function TicketTable() {
                 Copy Ticket ID
               </DropdownMenuItem>
               {ticket.proofUrl && (
-                <DropdownMenuItem onClick={handleViewProof}>
+                <DropdownMenuItem onClick={() => handleViewProof(ticket)}>
                   View Proof
                 </DropdownMenuItem>
               )}
@@ -367,13 +461,13 @@ export function TicketTable() {
             <DialogDescription></DialogDescription>
           </DialogHeader>
           {proofUrl && (
-            <div className="relative w-full h-[500px]">
+            <div className="relative w-full h-full">
               <Image
                 src={proofUrl}
                 alt="Proof document"
-                fill
-                sizes="(max-width: 768px) 100vw, 800px"
-                style={{ objectFit: 'contain' }}
+                width={400}
+                height={600}
+                className="object-contain w-full h-auto max-h-144"
                 onError={() => {
                   toast({
                     title: 'Error',
@@ -424,23 +518,35 @@ export function TicketTable() {
               </div>
               {/* Service ID */}
               <div className="grid grid-cols-4 items-center gap-4">
-                <label htmlFor="serviceId" className="text-right">
-                  Service ID
-                </label>
-                <Input
-                  id="serviceId"
-                  value={newTicket.serviceId}
-                  onChange={(e) =>
-                    setNewTicket({ ...newTicket, serviceId: e.target.value })
-                  }
-                  className="col-span-3"
-                />
+                <Label htmlFor="serviceId" className="text-right">
+                  Service
+                </Label>
+                <div className="col-span-3">
+                  <Select
+                    value={newTicket.serviceId}
+                    onValueChange={handleServiceChange}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select a service" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Select a service">
+                        Select a service
+                      </SelectItem>
+                      {services.map((service) => (
+                        <SelectItem key={service._id} value={service._id}>
+                          {service.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               {/* Client */}
               <div className="grid grid-cols-4 items-center gap-4">
-                <label htmlFor="client" className="text-right">
+                <Label htmlFor="client" className="text-right">
                   Client
-                </label>
+                </Label>
                 <Input
                   id="client"
                   value={newTicket.client}
@@ -452,9 +558,9 @@ export function TicketTable() {
               </div>
               {/* Email */}
               <div className="grid grid-cols-4 items-center gap-4">
-                <label htmlFor="email" className="text-right">
+                <Label htmlFor="email" className="text-right">
                   Email
-                </label>
+                </Label>
                 <Input
                   id="email"
                   value={newTicket.email}
@@ -466,16 +572,14 @@ export function TicketTable() {
               </div>
               {/* Start Date */}
               <div className="grid grid-cols-4 items-center gap-4">
-                <label htmlFor="startDate" className="text-right">
+                <Label htmlFor="startDate" className="text-right">
                   Start Date
-                </label>
+                </Label>
                 <Input
                   id="startDate"
                   type="date"
                   value={newTicket.startDate}
-                  onChange={(e) =>
-                    setNewTicket({ ...newTicket, startDate: e.target.value })
-                  }
+                  onChange={handleStartDateChange}
                   className="col-span-3"
                 />
               </div>
@@ -488,8 +592,23 @@ export function TicketTable() {
                   id="endDate"
                   type="date"
                   value={newTicket.endDate}
+                  readOnly
+                  className="col-span-3"
+                />
+              </div>
+              {/* Proof */}
+              <div className="grid grid-cols-4 items-center gap-4">
+                <label htmlFor="proof" className="text-right">
+                  Proof
+                </label>
+                <Input
+                  id="proof"
+                  type="file"
                   onChange={(e) =>
-                    setNewTicket({ ...newTicket, endDate: e.target.value })
+                    setNewTicket({
+                      ...newTicket,
+                      proof: e.target.files?.[0] || null,
+                    })
                   }
                   className="col-span-3"
                 />
