@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import withAuth from '../../components/withAuth';
 import { useEffect, useState, useRef } from 'react';
 import {
   Chart,
@@ -33,7 +34,7 @@ Chart.register(
   Legend
 );
 
-export default function Admin() {
+const Admin = () => {
   const [totalUsers, setTotalUsers] = useState(0);
   const [totalTickets, setTotalTickets] = useState(0);
   const [pendingTickets, setPendingTickets] = useState(0);
@@ -320,4 +321,6 @@ export default function Admin() {
       </div>
     </div>
   );
-}
+};
+
+export default withAuth(Admin, { requiredRole: 'admin' });

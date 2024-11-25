@@ -34,7 +34,7 @@ export function NavUser({
   const router = useRouter();
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
+    localStorage.clear();
     router.push('/auth/login');
   };
 

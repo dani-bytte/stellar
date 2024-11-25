@@ -25,7 +25,7 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
-export default function LoginPage() {
+const LoginPage = () => {
   const router = useRouter();
   const [, setUsername] = useState('');
 
@@ -38,7 +38,6 @@ export default function LoginPage() {
     },
   });
 
-  // Função para lidar com o login
   const handleLogin = async (values: LoginFormValues) => {
     try {
       const response = await fetch('/api/auth/login', {
@@ -50,24 +49,22 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (response.ok) {
-        const { token, role, isTemporaryPassword, hasProfile } = data;
-        console.log('Login efetuado com sucesso:', data);
-        localStorage.setItem('token', token);
-        localStorage.setItem('role', role);
-        setUsername(values.username);
+        console.log('API Response:', data); // Debug log
 
-        if (isTemporaryPassword) {
-          // Redireciona para a página de alteração de senha
-          router.push('/auth/password');
-        } else if (!hasProfile) {
-          // Redireciona para a página de completar perfil
-          router.push('/auth/profile');
-        } else {
-          // Redireciona com base no role do usuário
-          router.push(role === 'admin' ? '/admin' : '/home');
-        }
+        // Store as string explicitly
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('role', data.role);
+        localStorage.setItem('hasProfile', String(data.hasProfile)); // Fix: Use String()
+        localStorage.setItem(
+          'isTemporaryPassword',
+          String(data.isTemporaryPassword)
+        );
+
+        //console.log('Stored hasProfile:', localStorage.getItem('hasProfile')); // Debug log
+
+        const redirectUrl = data.role === 'admin' ? '/admin' : '/home';
+        router.push(redirectUrl);
       } else {
-        // Define um erro global no formulário de login
         loginForm.setError('root', { message: data.error });
       }
     } catch (error) {
@@ -142,4 +139,6 @@ export default function LoginPage() {
       </Card>
     </div>
   );
-}
+};
+
+export default LoginPage;

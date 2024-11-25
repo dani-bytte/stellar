@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import { ThemeProvider } from '@/components/ui';
+import { ThemeProvider } from 'next-themes';
 import ClientLayout from './ClientLayout';
 import { Separator } from '@/components/ui/separator';
 import Headers from '@/components/Header';
@@ -24,9 +24,10 @@ export default function RootLayout({
       <body className="antialiased" suppressHydrationWarning>
         <ThemeProvider
           attribute="class"
-          defaultTheme="Dark"
+          defaultTheme="dark"
           enableSystem
           disableTransitionOnChange
+          storageKey="theme-preference"
         >
           <Headers />
           <Separator />

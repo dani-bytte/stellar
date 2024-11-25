@@ -65,10 +65,20 @@ export default function ChangePasswordPage() {
       const data = await response.json();
 
       if (response.ok) {
+        // Update localStorage
         if (data.token) {
           localStorage.setItem('token', data.token);
         }
-        router.push('/auth/profile');
+        localStorage.setItem('isTemporaryPassword', 'false');
+
+        // Check profile status
+        const hasProfile = localStorage.getItem('hasProfile') === 'true';
+        if (!hasProfile) {
+          router.push('/auth/profile');
+        } else {
+          const role = localStorage.getItem('role');
+          router.push(role === 'admin' ? '/admin' : '/home');
+        }
       } else {
         changePasswordForm.setError('root', { message: data.error });
       }

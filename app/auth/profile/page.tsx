@@ -68,6 +68,7 @@ export default function RegisterInfoPage() {
   const handleRegisterInfo = async (values: RegisterInfoFormValues) => {
     try {
       const token = localStorage.getItem('token');
+      const storedRole = localStorage.getItem('role');
 
       if (!token) {
         registerInfoForm.setError('root', {
@@ -76,25 +77,19 @@ export default function RegisterInfoPage() {
         return;
       }
 
-      // Format the date fields into a single ISO date string
-      const birthDate = new Date(
-        values.birthYear,
-        values.birthMonth - 1, // JavaScript months are 0-based
-        values.birthDay
-      ).toISOString();
-
       // Create the payload matching the ProfileUser model
       const payload = {
         fullName: values.fullName,
         nickname: values.nickname,
-        birthDate: birthDate,
+        birthDay: values.birthDay,
+        birthMonth: values.birthMonth,
+        birthYear: values.birthYear,
         pixKey: values.pixKey,
         whatsapp: values.whatsapp,
         email: values.email,
       };
 
-      const response = await fetch('/api/home/profile', {
-        // Update endpoint to match backend
+      const response = await fetch('/api/home/admin/register-info', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -106,7 +101,12 @@ export default function RegisterInfoPage() {
       const data = await response.json();
 
       if (response.ok) {
-        router.push('/home');
+        // Update localStorage after successful profile registration
+        localStorage.setItem('hasProfile', 'true');
+        localStorage.setItem('userProfile', JSON.stringify(payload));
+
+        // Redirect based on role
+        router.push(storedRole === 'admin' ? '/admin' : '/home');
       } else {
         registerInfoForm.setError('root', { message: data.error });
       }

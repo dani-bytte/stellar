@@ -7,13 +7,13 @@ import {
   ColumnFiltersState,
   SortingState,
   VisibilityState,
-  flexRender,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
+import { flexRender } from '@tanstack/react-table';
 import { ArrowUpDown, MoreHorizontal, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,6 +32,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
   DropdownMenuCheckboxItem,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -54,6 +55,7 @@ import {
   SelectItem,
   SelectValue,
 } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 
 // Ticket type definition
 type Ticket = {
@@ -98,10 +100,14 @@ export function TicketTable() {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    []
+  );
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
     service_name: false,
     startDate: false,
+    service: false,
+    client: false,
   });
   const [dialogOpen, setDialogOpen] = useState(false);
   const [proofUrl, setProofUrl] = useState<string | null>(null);
@@ -115,6 +121,7 @@ export function TicketTable() {
     endDate: '',
     proof: null,
   });
+  const [rowSelection, setRowSelection] = React.useState({});
 
   const isMounted = useRef(false);
 
@@ -146,21 +153,35 @@ export function TicketTable() {
   const fetchServices = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
+      if (!token) throw new Error('Token não encontrado');
+
       const response = await fetch('/api/tickets/services', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      const services = await response.json();
 
-      console.log('Services recebidos:', services); // Adicione este log
+      if (response.status === 401) {
+        // Token expirado, redirecione para login ou trate conforme necessário
+        console.error('Token expirado');
+        // Por exemplo, você pode limpar o token e redirecionar:
+        localStorage.removeItem('token');
+        window.location.href = '/login';
+        return;
+      }
 
-      setServices(services);
+      if (!response.ok) {
+        throw new Error('Falha ao buscar serviços');
+      }
+
+      const servicesData = await response.json();
+      setServices(servicesData);
     } catch (error) {
-      console.error('Error fetching services:', error);
+      console.error('Erro ao buscar serviços:', error);
+      setServices([]); // Garante que services seja um array
       toast({
-        title: 'Error',
-        description: 'Failed to load services',
+        title: 'Erro',
+        description: 'Falha ao carregar serviços',
         variant: 'destructive',
       });
     }
@@ -252,25 +273,84 @@ export function TicketTable() {
     });
   };
 
+  // Update your column definitions for consistency
   const columns: ColumnDef<Ticket>[] = [
     {
-      accessorKey: 'ticket',
-      header: 'Ticket',
-      enableHiding: true,
+      id: 'select',
+      header: ({ table }) => (
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && 'indeterminate')
+          }
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
     },
     {
-      accessorKey: 'service.name',
-      header: 'Service',
+      accessorKey: 'ticket',
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+          >
+            Ticket
+            <ArrowUpDown />
+          </Button>
+        );
+      },
     },
     {
       accessorKey: 'client',
       header: 'Client',
     },
     {
+      accessorKey: 'service',
+      header: 'Service',
+      cell: ({ row }) => {
+        // Acessa `service.name` do objeto aninhado
+        const service = row.original.service;
+        return service ? service.name : 'No Service';
+      },
+    },
+    {
+      accessorKey: 'createdBy',
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+          >
+            Created
+            <ArrowUpDown />
+          </Button>
+        );
+      },
+      cell: ({ row }) => {
+        // Acessa `createdBy.username` do objeto aninhado
+        const createdBy = row.original.createdBy;
+        return createdBy ? createdBy.username : 'Unknown';
+      },
+    },
+    {
       accessorKey: 'startDate',
       header: 'Start Date',
       cell: ({ row }) => {
-        return new Date(row.getValue('startDate')).toLocaleDateString();
+        const startDate = row.original.startDate;
+        return startDate
+          ? new Date(startDate).toLocaleDateString() // Formata a data
+          : 'No Start Date';
       },
     },
     {
@@ -281,35 +361,26 @@ export function TicketTable() {
             variant="ghost"
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
           >
-            endDate
+            End Date
             <ArrowUpDown />
           </Button>
         );
       },
-      enableSorting: true,
       cell: ({ row }) => {
-        return new Date(row.getValue('endDate')).toLocaleDateString();
+        const endDate = row.original.endDate;
+        return endDate
+          ? new Date(endDate).toLocaleDateString() // Formata a data
+          : 'No End Date';
       },
     },
     {
       accessorKey: 'status',
-      header: ({ column }) => {
-        return (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          >
-            status
-            <ArrowUpDown />
-          </Button>
-        );
-      },
-      enableSorting: true,
+      header: 'Status',
       cell: ({ row }) => {
-        const status = row.getValue('status') as string;
+        const status = row.original.status;
         return (
           <span
-            className={`px-2 py-1 rounded-full text-sm ${
+            className={`px-2 py-1 rounded-full ${
               status === 'finalizado'
                 ? 'bg-green-100 text-green-800'
                 : 'bg-yellow-100 text-yellow-800'
@@ -322,23 +393,12 @@ export function TicketTable() {
     },
     {
       accessorKey: 'payment',
-      header: ({ column }) => {
-        return (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          >
-            payment
-            <ArrowUpDown />
-          </Button>
-        );
-      },
-      enableSorting: true,
+      header: 'Payment',
       cell: ({ row }) => {
-        const payment = row.getValue('payment') as string;
+        const payment = row.original.payment;
         return (
           <span
-            className={`px-2 py-1 rounded-full text-sm ${
+            className={`px-2 py-1 rounded-full ${
               payment === 'completo'
                 ? 'bg-green-100 text-green-800'
                 : 'bg-red-100 text-red-800'
@@ -348,18 +408,6 @@ export function TicketTable() {
           </span>
         );
       },
-    },
-    {
-      accessorKey: 'createdBy', // Change this line
-      header: 'Criado Por',
-      cell: ({ row }) => {
-        const createdBy = row.getValue('createdBy') as {
-          username: string;
-        } | null;
-        return createdBy?.username || 'none';
-      },
-      enableSorting: false,
-      enableHiding: true,
     },
     {
       id: 'actions',
@@ -419,6 +467,7 @@ export function TicketTable() {
               >
                 Copy Ticket ID
               </DropdownMenuItem>
+              <DropdownMenuSeparator />
               {ticket.proofUrl && (
                 <DropdownMenuItem onClick={() => handleViewProof(ticket)}>
                   View Proof
@@ -441,10 +490,12 @@ export function TicketTable() {
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
+    onRowSelectionChange: setRowSelection,
     state: {
       sorting,
       columnFilters,
       columnVisibility,
+      rowSelection,
     },
   });
 
@@ -632,16 +683,20 @@ export function TicketTable() {
             {table
               .getAllColumns()
               .filter((column) => column.getCanHide())
-              .map((column) => (
-                <DropdownMenuCheckboxItem
-                  key={column.id}
-                  className="capitalize"
-                  checked={column.getIsVisible()}
-                  onCheckedChange={(value) => column.toggleVisibility(!!value)}
-                >
-                  {column.id}
-                </DropdownMenuCheckboxItem>
-              ))}
+              .map((column) => {
+                return (
+                  <DropdownMenuCheckboxItem
+                    key={column.id}
+                    className="capitalize"
+                    checked={column.getIsVisible()}
+                    onCheckedChange={(value) =>
+                      column.toggleVisibility(!!value)
+                    }
+                  >
+                    {column.id}
+                  </DropdownMenuCheckboxItem>
+                );
+              })}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -666,9 +721,12 @@ export function TicketTable() {
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && 'selected'}
+                >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
+                    <TableCell key={cell.id} className="px-1 py-1 text-center">
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext()
@@ -683,7 +741,7 @@ export function TicketTable() {
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                  No tickets found.
+                  Sem resultados.
                 </TableCell>
               </TableRow>
             )}
@@ -691,6 +749,10 @@ export function TicketTable() {
         </Table>
       </div>
       <div className="flex items-center justify-end space-x-2 py-4">
+        <div className="flex-1 text-sm text-muted-foreground">
+          {table.getFilteredSelectedRowModel().rows.length} of{' '}
+          {table.getFilteredRowModel().rows.length} row(s) selected.
+        </div>
         <Button
           variant="outline"
           size="sm"
