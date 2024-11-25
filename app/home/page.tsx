@@ -4,9 +4,13 @@ import React from 'react';
 
 const HomePage: React.FC = () => {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen py-2">
-      <h1>Welcome to the Home Page</h1>
-      <p>This is a simple page to get started.</p>
+    <div className="flex flex-1 flex-col gap-4 px-4 py-10">
+      <div className="mx-auto h-24 w-full max-w-3xl rounded-xl bg-muted/50">
+        <h1>Welcome to the Home Page</h1>
+      </div>
+      <div className="mx-auto h-full w-full max-w-3xl rounded-xl bg-muted/50">
+        <p>This is a simple page to get started.</p>
+      </div>
     </div>
   );
 };

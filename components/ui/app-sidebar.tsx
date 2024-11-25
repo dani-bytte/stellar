@@ -165,6 +165,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               title: 'Users',
               url: '/admin/users',
             },
+            {
+              title: 'Services',
+              url: '/admin/services',
+            },
           ],
         });
       }

@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import withAuth from '../../components/withAuth';
+import withAuth from '@/components/withAuth';
 import { useEffect, useState, useRef } from 'react';
 import {
   Chart,
