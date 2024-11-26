@@ -16,6 +16,8 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
+import { toast } from 'sonner';
+import { Toaster } from '@/components/ui/sonner';
 
 // Schema de Validação para Login
 const loginSchema = z.object({
@@ -49,34 +51,32 @@ const LoginPage = () => {
       const data = await response.json();
 
       if (response.ok) {
-        console.log('API Response:', data); // Debug log
-
-        // Store as string explicitly
         localStorage.setItem('token', data.token);
         localStorage.setItem('role', data.role);
-        localStorage.setItem('hasProfile', String(data.hasProfile)); // Fix: Use String()
+        localStorage.setItem('hasProfile', String(data.hasProfile));
         localStorage.setItem(
           'isTemporaryPassword',
           String(data.isTemporaryPassword)
         );
 
-        //console.log('Stored hasProfile:', localStorage.getItem('hasProfile')); // Debug log
+        console.log(data);
 
         const redirectUrl = data.role === 'admin' ? '/admin' : '/home';
         router.push(redirectUrl);
       } else {
+        toast.error(data.error);
         loginForm.setError('root', { message: data.error });
       }
     } catch (error) {
-      console.error('Erro ao fazer login:', error);
-      loginForm.setError('root', {
-        message: 'Erro ao fazer login. Por favor, tente novamente.',
-      });
+      const errorMessage = 'Erro ao fazer login. Por favor, tente novamente.';
+      toast.error(errorMessage);
+      loginForm.setError('root', { message: errorMessage });
     }
   };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen py-2">
+      <Toaster position="top-right" />
       <Card className="w-full max-w-md p-6">
         <CardHeader>
           <h2 className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0">
@@ -125,11 +125,6 @@ const LoginPage = () => {
                   </FormItem>
                 )}
               />
-              {loginForm.formState.errors.root && (
-                <p className="text-red-500 text-sm">
-                  {loginForm.formState.errors.root.message}
-                </p>
-              )}
               <Button type="submit" className="w-full">
                 Login
               </Button>

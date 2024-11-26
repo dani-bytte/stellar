@@ -54,8 +54,20 @@ import {
   SelectContent,
   SelectItem,
   SelectValue,
+  SelectGroup,
+  SelectLabel,
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 // Ticket type definition
 type Ticket = {
@@ -64,6 +76,10 @@ type Ticket = {
   service: {
     _id: string;
     name: string;
+    category: {
+      _id: string;
+      name: string;
+    };
   };
   client: string;
   email: string;
@@ -82,6 +98,10 @@ type Service = {
   _id: string;
   name: string;
   dueDate: number;
+  category: {
+    _id: string;
+    name: string;
+  };
 };
 
 type NewTicket = {
@@ -122,20 +142,21 @@ export function TicketTable() {
     proof: null,
   });
   const [rowSelection, setRowSelection] = React.useState({});
+  const [ticketToDelete, setTicketToDelete] = useState<Ticket | null>(null);
 
   const isMounted = useRef(false);
 
   const fetchTickets = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('/api/tickets', {
+      const response = await fetch('/api/tickets/list', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
       const tickets = await response.json();
 
-      console.log('Tickets recebidos:', tickets); // Adicione este log
+      //console.log('Tickets recebidos:', tickets); // Adicione este log
 
       setData(tickets);
     } catch (error) {
@@ -155,7 +176,7 @@ export function TicketTable() {
       const token = localStorage.getItem('token');
       if (!token) throw new Error('Token não encontrado');
 
-      const response = await fetch('/api/tickets/services', {
+      const response = await fetch('/api/tickets/services/list', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -209,7 +230,7 @@ export function TicketTable() {
         formData.append('proof', newTicket.proof);
       }
 
-      const response = await fetch('/api/tickets/new', {
+      const response = await fetch('/api/tickets', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -273,6 +294,41 @@ export function TicketTable() {
     });
   };
 
+  const handleHideTicket = async (ticketId: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/tickets/${ticketId}/hide`, {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to hide ticket');
+      }
+
+      toast({
+        title: 'Success',
+        description: 'Ticket hidden successfully',
+      });
+
+      // Refresh tickets list
+      await fetchTickets();
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description:
+          error instanceof Error ? error.message : 'Failed to hide ticket',
+        variant: 'destructive',
+      });
+    } finally {
+      setTicketToDelete(null);
+    }
+  };
+
   // Update your column definitions for consistency
   const columns: ColumnDef<Ticket>[] = [
     {
@@ -319,9 +375,15 @@ export function TicketTable() {
       accessorKey: 'service',
       header: 'Service',
       cell: ({ row }) => {
-        // Acessa `service.name` do objeto aninhado
         const service = row.original.service;
-        return service ? service.name : 'No Service';
+        return (
+          <div className="flex flex-col">
+            <span>{service?.name}</span>
+            <span className="text-xs text-muted-foreground">
+              {service?.category?.name}
+            </span>
+          </div>
+        );
       },
     },
     {
@@ -473,6 +535,13 @@ export function TicketTable() {
                   View Proof
                 </DropdownMenuItem>
               )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => setTicketToDelete(ticket)}
+                className="text-red-600"
+              >
+                Hide Ticket
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         );
@@ -489,6 +558,12 @@ export function TicketTable() {
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
+    filterFns: {
+      service: (row, id, filterValue) => {
+        if (filterValue === 'all') return true;
+        return row.original.service._id === filterValue;
+      },
+    },
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
     state: {
@@ -532,6 +607,32 @@ export function TicketTable() {
           )}
         </DialogContent>
       </Dialog>
+      {ticketToDelete && (
+        <AlertDialog
+          open={!!ticketToDelete}
+          onOpenChange={() => setTicketToDelete(null)}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will hide the ticket{' '}
+                <span className="font-semibold">#{ticketToDelete.ticket}</span>.
+                This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => handleHideTicket(ticketToDelete._id)}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                Hide Ticket
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
       <div className="flex items-center py-4 space-x-4">
         <Input
           placeholder="Filter tickets..."
@@ -541,6 +642,35 @@ export function TicketTable() {
           }
           className="max-w-sm"
         />
+        <Select
+          value={
+            (table.getColumn('service')?.getFilterValue() as string) ?? 'all'
+          }
+          onValueChange={(value) =>
+            table.getColumn('service')?.setFilterValue(value)
+          }
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Filter by service" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All services</SelectItem>
+            {Array.from(new Set(services.map((s) => s.category.name))).map(
+              (categoryName) => (
+                <SelectGroup key={categoryName}>
+                  <SelectLabel>{categoryName}</SelectLabel>
+                  {services
+                    .filter((service) => service.category.name === categoryName)
+                    .map((service) => (
+                      <SelectItem key={service._id} value={service._id}>
+                        {service.name}
+                      </SelectItem>
+                    ))}
+                </SelectGroup>
+              )
+            )}
+          </SelectContent>
+        </Select>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button variant="outline">Create New Ticket</Button>
@@ -581,13 +711,22 @@ export function TicketTable() {
                       <SelectValue placeholder="Select a service" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Select a service">
-                        Select a service
-                      </SelectItem>
-                      {services.map((service) => (
-                        <SelectItem key={service._id} value={service._id}>
-                          {service.name}
-                        </SelectItem>
+                      {Array.from(
+                        new Set(services.map((s) => s.category.name))
+                      ).map((categoryName) => (
+                        <SelectGroup key={categoryName}>
+                          <SelectLabel>{categoryName}</SelectLabel>
+                          {services
+                            .filter(
+                              (service) =>
+                                service.category.name === categoryName
+                            )
+                            .map((service) => (
+                              <SelectItem key={service._id} value={service._id}>
+                                {service.name}
+                              </SelectItem>
+                            ))}
+                        </SelectGroup>
                       ))}
                     </SelectContent>
                   </Select>

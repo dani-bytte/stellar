@@ -55,6 +55,16 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 // Updated User type
 export type User = {
@@ -92,6 +102,11 @@ export function UserTable() {
   const [profileError, setProfileError] = React.useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [newUser, setNewUser] = React.useState({ username: '', email: '' });
+  const [isDeactivateDialogOpen, setIsDeactivateDialogOpen] =
+    React.useState(false);
+  const [userToDeactivate, setUserToDeactivate] = React.useState<User | null>(
+    null
+  );
 
   const fetchUsers = async () => {
     try {
@@ -185,6 +200,53 @@ export function UserTable() {
         description: 'An unexpected error occurred',
         variant: 'destructive',
       });
+    }
+  };
+
+  const handleDeactivateUser = async (userId: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      // Fix: Remove colon from URL parameter
+      const response = await fetch(`/api/auth/users/${userId}/deactivate`, {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Handle specific error cases from backend
+        switch (response.status) {
+          case 403:
+            throw new Error(data.error || 'Permission denied');
+          case 404:
+            throw new Error('User not found');
+          case 400:
+            throw new Error(data.error || 'Invalid request');
+          default:
+            throw new Error(data.error || 'Failed to deactivate user');
+        }
+      }
+
+      toast({
+        title: 'Success',
+        description: data.message || 'User deactivated successfully',
+      });
+
+      await fetchUsers();
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description:
+          error instanceof Error ? error.message : 'Failed to deactivate user',
+        variant: 'destructive',
+      });
+    } finally {
+      setUserToDeactivate(null);
+      setIsDeactivateDialogOpen(false);
     }
   };
 
@@ -290,6 +352,16 @@ export function UserTable() {
                   }}
                 >
                   View user details
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => {
+                    setUserToDeactivate(user);
+                    setIsDeactivateDialogOpen(true);
+                  }}
+                  className="text-red-600"
+                >
+                  Deactivate user
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -623,6 +695,35 @@ export function UserTable() {
             </SheetFooter>
           </SheetContent>
         </Sheet>
+      )}
+      {userToDeactivate && (
+        <AlertDialog
+          open={isDeactivateDialogOpen}
+          onOpenChange={setIsDeactivateDialogOpen}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This will deactivate the user
+                account for{' '}
+                <span className="font-semibold">
+                  {userToDeactivate.username}
+                </span>
+                .
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => handleDeactivateUser(userToDeactivate._id)}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                Deactivate
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       )}
     </div>
   );
