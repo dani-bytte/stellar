@@ -13,7 +13,7 @@ const nextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: 'http://localhost:3001/:path*', // Proxy to Backend
+        destination: 'https://apistellar.squareweb.app/:path*', // Proxy to Backend
       },
     ];
   },

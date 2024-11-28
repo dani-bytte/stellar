@@ -1,103 +1,52 @@
 // components/withAuth.tsx
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
-import { UseFormReturn } from 'react-hook-form';
-import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
+import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import type { NextRouter } from 'next/router';
+import type { UseFormReturn } from 'react-hook-form';
 
-interface AuthProps {
-  requiredRole?: 'admin' | 'user';
-}
-
-interface UserAuthState {
-  isTemporaryPassword: boolean;
-  hasProfile: boolean;
-  role: string;
+interface WithAuthProps {
+  requiredRole?: string;
 }
 
 const withAuth = <P extends object>(
   WrappedComponent: React.ComponentType<P>,
-  { requiredRole }: AuthProps = {}
+  { requiredRole }: WithAuthProps
 ) => {
-  return function WithAuthComponent(props: P) {
+  const ComponentWithAuth = (props: P) => {
     const router = useRouter();
-    const pathname = usePathname();
-    const [isLoading, setIsLoading] = useState(true);
-    const [isAuthorized, setIsAuthorized] = useState(false);
-
-    const isAuthPage = [
-      '/auth/login',
-      '/auth/password',
-      '/auth/profile',
-    ].includes(pathname);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-      const verifyAuth = async () => {
-        try {
-          if (isAuthPage) {
-            setIsAuthorized(true);
-            setIsLoading(false);
-            return;
-          }
+      const checkAuth = async () => {
+        const token = localStorage.getItem('token');
+        const role = localStorage.getItem('role');
 
-          const token = localStorage.getItem('token');
-          const storedRole = localStorage.getItem('role');
-          const isTemporaryPassword =
-            localStorage.getItem('isTemporaryPassword') === 'true';
-          const hasProfile = localStorage.getItem('hasProfile') === 'true';
-
-          if (!token) {
-            router.push('/auth/login');
-            return;
-          }
-
-          // Validate token
-          const response = await fetch('/api/auth/validate-token', {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
-
-          if (!response.ok) {
-            throw new Error('Token inválido');
-          }
-
-          // Check role permissions
-          if (requiredRole && storedRole !== requiredRole) {
-            router.push(storedRole === 'admin' ? '/admin' : '/home');
-            return;
-          }
-
-          // Check required steps in order
-          if (isTemporaryPassword && pathname !== '/auth/password') {
-            router.push('/auth/password');
-            return;
-          }
-
-          if (!hasProfile && pathname !== '/auth/profile') {
-            router.push('/auth/profile');
-            return;
-          }
-
-          // If all checks pass
-          setIsAuthorized(true);
-          setIsLoading(false);
-        } catch (error) {
-          console.error('Erro:', error);
-          localStorage.clear();
-          router.push('/auth/login');
+        if (!token || (requiredRole && role !== requiredRole)) {
+          router.push('/login');
+        } else {
+          setIsAuthenticated(true);
         }
+        setLoading(false);
       };
 
-      verifyAuth();
-    }, [router, pathname, isAuthPage, requiredRole]);
+      checkAuth();
+    }, [router]); // Remove `requiredRole` from the dependency array
 
-    if (isLoading) return <div>Carregando...</div>;
-    if (!isAuthorized) return null;
+    if (loading) {
+      return <div>Loading...</div>;
+    }
+
+    if (!isAuthenticated) {
+      return null;
+    }
 
     return <WrappedComponent {...props} />;
   };
+
+  return ComponentWithAuth;
 };
 
 interface LoginFormValues {
@@ -114,11 +63,10 @@ interface LoginResponse {
   error?: string;
 }
 
-// Atualizar handleLogin para armazenar todos os dados necessários
 const handleLogin = async (
   values: LoginFormValues,
   form: UseFormReturn<LoginFormValues>,
-  router: AppRouterInstance
+  router: NextRouter
 ) => {
   try {
     const response = await fetch('/api/auth/login', {

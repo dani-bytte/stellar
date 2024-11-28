@@ -536,12 +536,14 @@ export function TicketTable() {
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => setTicketToDelete(ticket)}
-                className="text-red-600"
-              >
-                Hide Ticket
-              </DropdownMenuItem>
+              {localStorage.getItem('role') === 'admin' && (
+                <DropdownMenuItem
+                  onClick={() => setTicketToDelete(ticket)}
+                  className="text-red-600"
+                >
+                  Hide Ticket
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         );
