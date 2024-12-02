@@ -69,6 +69,21 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
+import { Form, FormControl, FormField, FormLabel } from '@/components/ui/form';
+import { Slider } from '@/components/ui/slider';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
+
 // Ticket type definition
 type Ticket = {
   _id: string;
@@ -114,6 +129,19 @@ type NewTicket = {
   proof: File | null;
 };
 
+// Transfer Request types and schema
+type TransferRequest = {
+  ticketId: string;
+  progressPercentage: number;
+  clientInfo: string;
+};
+
+// Update transfer schema - remove transferToId
+const transferSchema = z.object({
+  progressPercentage: z.number().min(0).max(100),
+  clientInfo: z.string().min(1, 'Required'),
+});
+
 export function TicketTable() {
   const { toast } = useToast();
   const [data, setData] = useState<Ticket[]>([]);
@@ -143,6 +171,9 @@ export function TicketTable() {
   });
   const [rowSelection, setRowSelection] = React.useState({});
   const [ticketToDelete, setTicketToDelete] = useState<Ticket | null>(null);
+
+  const [transferOpen, setTransferOpen] = useState(false);
+  const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
 
   const isMounted = useRef(false);
 
@@ -327,6 +358,150 @@ export function TicketTable() {
     } finally {
       setTicketToDelete(null);
     }
+  };
+
+  // Update TransferRequestSheet form and submit button
+  const TransferRequestSheet = ({
+    ticketId,
+    open,
+    onOpenChange,
+  }: {
+    ticketId: string;
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+  }) => {
+    const [loading, setLoading] = useState(false);
+
+    const form = useForm<TransferRequest>({
+      resolver: zodResolver(transferSchema),
+      defaultValues: {
+        progressPercentage: 0,
+        clientInfo: '',
+      },
+    });
+
+    const onSubmit = async (values: Omit<TransferRequest, 'ticketId'>) => {
+      try {
+        setLoading(true);
+        const token = localStorage.getItem('token');
+
+        const requestData = {
+          ticketId,
+          progressPercentage: values.progressPercentage,
+          clientInfo: values.clientInfo,
+        };
+
+        console.log('Submitting transfer request:', requestData);
+
+        const response = await fetch('/api/tickets/transfer/request', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(requestData),
+        });
+
+        const data = await response.json();
+        console.log('API Response:', data);
+
+        if (!response.ok)
+          throw new Error(data.error || 'Failed to submit transfer request');
+
+        toast({
+          title: 'Success',
+          description: 'Transfer request submitted successfully',
+        });
+
+        form.reset();
+        onOpenChange(false);
+      } catch (error) {
+        console.error('Transfer request error:', error);
+        toast({
+          title: 'Error',
+          description:
+            error instanceof Error
+              ? error.message
+              : 'Failed to submit transfer request',
+          variant: 'destructive',
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Update SheetFooter button
+    return (
+      <Sheet open={open} onOpenChange={onOpenChange}>
+        <SheetContent side="right">
+          <SheetHeader>
+            <SheetTitle>Tranferencia de pedido</SheetTitle>
+            <SheetDescription>
+              Informe os detalhes do que foi feito no pedido, junto das
+              informacões do cliente.
+            </SheetDescription>
+          </SheetHeader>
+
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="space-y-6 py-6 p-4"
+            >
+              <FormField
+                control={form.control}
+                name="progressPercentage"
+                render={({ field }) => (
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <FormLabel className="text-right">Progress</FormLabel>
+                    <div className="col-span-3 space-y-2">
+                      <Slider
+                        min={0}
+                        max={100}
+                        step={1}
+                        value={[field.value]}
+                        onValueChange={(value) => field.onChange(value[0])}
+                        className="w-full"
+                      />
+                      <span className="text-sm text-muted-foreground">
+                        {field.value}%
+                      </span>
+                    </div>
+                  </div>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="clientInfo"
+                render={({ field }) => (
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <FormLabel className="text-right">Client Info</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        {...field}
+                        className="col-span-3 min-h-[100px]"
+                        placeholder="Additional information about the client..."
+                      />
+                    </FormControl>
+                  </div>
+                )}
+              />
+
+              <SheetFooter>
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  onClick={form.handleSubmit(onSubmit)}
+                  className="w-full"
+                >
+                  {loading ? 'Submitting...' : 'Submit Request'}
+                </Button>
+              </SheetFooter>
+            </form>
+          </Form>
+        </SheetContent>
+      </Sheet>
+    );
   };
 
   // Update your column definitions for consistency
@@ -532,16 +707,24 @@ export function TicketTable() {
               <DropdownMenuSeparator />
               {ticket.proofUrl && (
                 <DropdownMenuItem onClick={() => handleViewProof(ticket)}>
-                  View Proof
+                  Comprovante
                 </DropdownMenuItem>
               )}
+              <DropdownMenuItem
+                onClick={() => {
+                  setSelectedTicketId(ticket._id);
+                  setTransferOpen(true);
+                }}
+              >
+                Transferência
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               {localStorage.getItem('role') === 'admin' && (
                 <DropdownMenuItem
                   onClick={() => setTicketToDelete(ticket)}
                   className="text-red-600"
                 >
-                  Hide Ticket
+                  Apagar
                 </DropdownMenuItem>
               )}
             </DropdownMenuContent>
@@ -911,6 +1094,16 @@ export function TicketTable() {
           Next
         </Button>
       </div>
+      {selectedTicketId && (
+        <TransferRequestSheet
+          ticketId={selectedTicketId}
+          open={transferOpen}
+          onOpenChange={(open) => {
+            setTransferOpen(open);
+            if (!open) setSelectedTicketId(null);
+          }}
+        />
+      )}
     </div>
   );
 }
