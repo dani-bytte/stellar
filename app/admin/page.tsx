@@ -22,6 +22,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui';
+import { Separator } from '@radix-ui/react-dropdown-menu';
 
 // Registrar os componentes do Chart.js
 Chart.register(
@@ -33,6 +34,10 @@ Chart.register(
   Tooltip,
   Legend
 );
+import { TicketDistributionChart } from './grafic';
+
+// Add interface
+import { UserTicket } from '@/types';
 
 const Admin = () => {
   const [totalUsers, setTotalUsers] = useState(0);
@@ -44,6 +49,11 @@ const Admin = () => {
   const [upcomingTickets, setUpcomingTickets] = useState(0);
   const [ticketsByMonth, setTicketsByMonth] = useState<number[]>([]);
   const ticketsByMonthChartRef = useRef<Chart | null>(null);
+
+  // Add state for user ticket distribution
+  const [userTicketDistribution, setUserTicketDistribution] = useState<
+    UserTicket[]
+  >([]);
 
   // Novos estados para o diálogo
   const [openDialog, setOpenDialog] = useState(false);
@@ -117,36 +127,46 @@ const Admin = () => {
     }
   }, [ticketsByMonth]);
 
+  // Update fetchDashboardData in page.tsx
   const fetchDashboardData = async () => {
     try {
       const token = localStorage.getItem('token');
-      if (!token) {
-        console.error('Token não encontrado');
-        return;
-      }
+      if (!token) return;
 
-      const response = await fetch('/api/home/admin/dashboard-data', {
+      // Fetch ticket count data
+      const ticketCountResponse = await fetch('/api/home/admin/ticketscount', {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
       });
 
-      if (!response.ok) {
-        throw new Error('Falha ao buscar dados do dashboard');
-      }
+      const ticketCountData = await ticketCountResponse.json();
+      console.log('Raw ticket count data:', ticketCountData);
+      setUserTicketDistribution(ticketCountData as UserTicket[]);
 
-      const data = await response.json();
-      setTotalUsers(data.totalUsers);
-      setTotalTickets(data.totalTickets);
-      setPendingTickets(data.pendingTickets);
-      setCompletedTickets(data.completedTickets);
-      setDueTickets(data.dueTickets);
-      setTodayTickets(data.todayTickets);
-      setUpcomingTickets(data.upcomingTickets);
-      setTicketsByMonth(data.ticketsByMonth); // Certifique-se de que o backend retorna os tickets por mês
+      // Fetch dashboard data
+      const dashboardResponse = await fetch('/api/home/admin/dashboard-data', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (dashboardResponse.ok) {
+        const dashboardData = await dashboardResponse.json();
+        // Add back all state updates
+        setTotalUsers(dashboardData.totalUsers);
+        setTotalTickets(dashboardData.totalTickets);
+        setPendingTickets(dashboardData.pendingTickets);
+        setCompletedTickets(dashboardData.completedTickets);
+        setDueTickets(dashboardData.dueTickets);
+        setTodayTickets(dashboardData.todayTickets);
+        setUpcomingTickets(dashboardData.upcomingTickets);
+        setTicketsByMonth(dashboardData.ticketsByMonth);
+      }
     } catch (error) {
-      console.error('Erro ao buscar dados do dashboard:', error);
+      console.error('Erro ao buscar dados:', error);
     }
   };
 
@@ -318,6 +338,10 @@ const Admin = () => {
             </div>
           </CardContent>
         </Card>
+        <Separator />
+        <TicketDistributionChart
+          userTicketDistribution={userTicketDistribution}
+        />
       </div>
     </div>
   );
