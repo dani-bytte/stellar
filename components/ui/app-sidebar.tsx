@@ -169,6 +169,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               title: 'Services',
               url: '/admin/services',
             },
+            {
+              title: 'Descontos',
+              url: '/admin/discounts',
+            },
+            {
+              title: 'Pagamentos',
+              url: '/admin/payment',
+            },
           ],
         });
       }

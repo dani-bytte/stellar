@@ -119,15 +119,22 @@ type Service = {
   };
 };
 
-type NewTicket = {
+// Add interfaces
+interface DialogProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+interface NewTicket {
   ticket: string;
   serviceId: string;
   client: string;
   email: string;
   startDate: string;
   endDate: string;
-  proof: File | null;
-};
+  discountId?: string; // Optional discount
+  proof?: File;
+}
 
 // Transfer Request types and schema
 type TransferRequest = {
@@ -141,6 +148,14 @@ const transferSchema = z.object({
   progressPercentage: z.number().min(0).max(100),
   clientInfo: z.string().min(1, 'Required'),
 });
+
+// Add new type for Discount
+type Discount = {
+  _id: string;
+  cargo: string;
+  desconto: number;
+  visivel: boolean;
+};
 
 export function TicketTable() {
   const { toast } = useToast();
@@ -167,7 +182,8 @@ export function TicketTable() {
     email: '',
     startDate: '',
     endDate: '',
-    proof: null,
+    discountId: undefined,
+    proof: undefined,
   });
   const [rowSelection, setRowSelection] = React.useState({});
   const [ticketToDelete, setTicketToDelete] = useState<Ticket | null>(null);
@@ -175,27 +191,32 @@ export function TicketTable() {
   const [transferOpen, setTransferOpen] = useState(false);
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
 
+  const [discounts, setDiscounts] = useState<Discount[]>([]);
+
   const isMounted = useRef(false);
 
   const fetchTickets = useCallback(async () => {
     try {
+      setLoading(true);
       const token = localStorage.getItem('token');
+      if (!token) throw new Error('No token found');
+
       const response = await fetch('/api/tickets/list', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      const tickets = await response.json();
 
-      //console.log('Tickets recebidos:', tickets); // Adicione este log
+      if (!response.ok) throw new Error('Failed to fetch tickets');
 
-      setData(tickets);
+      const result = await response.json();
+      setData(result);
     } catch (error) {
       console.error('Error fetching tickets:', error);
       toast({
+        variant: 'destructive',
         title: 'Error',
         description: 'Failed to load tickets',
-        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -239,29 +260,62 @@ export function TicketTable() {
     }
   }, [toast]);
 
-  useEffect(() => {
-    if (!isMounted.current) {
-      fetchTickets();
-      fetchServices();
-      isMounted.current = true;
+  // Add fetchDiscounts function
+  const fetchDiscounts = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/tickets/discounts/list', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) throw new Error('Failed to fetch discounts');
+      const discountData = await response.json();
+      setDiscounts(discountData.filter((d: Discount) => d.visivel));
+    } catch (error) {
+      console.error('Error fetching discounts:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to load discounts',
+      });
     }
-  }, [fetchTickets, fetchServices]);
+  }, [toast]);
+
+  // Update useEffect
+  useEffect(() => {
+    Promise.all([fetchServices(), fetchDiscounts(), fetchTickets()]).catch(
+      (error) => {
+        console.error('Error loading data:', error);
+        setLoading(false);
+      }
+    );
+  }, [fetchServices, fetchDiscounts, fetchTickets]);
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleCreateTicket = async () => {
+    setIsSubmitting(true);
     try {
       const token = localStorage.getItem('token');
       const formData = new FormData();
+
       formData.append('ticket', newTicket.ticket);
       formData.append('serviceId', newTicket.serviceId);
       formData.append('client', newTicket.client);
       formData.append('email', newTicket.email);
       formData.append('startDate', newTicket.startDate);
-      formData.append('endDate', newTicket.endDate);
+
+      if (newTicket.discountId) {
+        formData.append('discountId', newTicket.discountId);
+      }
+
       if (newTicket.proof) {
         formData.append('proof', newTicket.proof);
       }
 
-      const response = await fetch('/api/tickets', {
+      // Submit the form data to the API
+      const response = await fetch('/api/tickets/new', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -273,10 +327,8 @@ export function TicketTable() {
         throw new Error('Failed to create ticket');
       }
 
-      const result = await response.json();
-      console.log('Ticket criado:', result);
-
-      setIsDialogOpen(false);
+      // Handle success
+      await fetchTickets();
       setNewTicket({
         ticket: '',
         serviceId: '',
@@ -284,14 +336,14 @@ export function TicketTable() {
         email: '',
         startDate: '',
         endDate: '',
-        proof: null,
+        discountId: undefined,
+        proof: undefined,
       });
-      await fetchTickets();
-
       toast({
         title: 'Success',
         description: 'Ticket created successfully',
       });
+      setIsDialogOpen(false);
     } catch (error) {
       console.error('Error creating ticket:', error);
       toast({
@@ -299,6 +351,8 @@ export function TicketTable() {
         description: 'An unexpected error occurred',
         variant: 'destructive',
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -760,8 +814,142 @@ export function TicketTable() {
   });
 
   if (loading) {
-    return <div>Loading tickets...</div>;
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p>Loading tickets...</p>
+        </div>
+      </div>
+    );
   }
+
+  // Update CreateTicketDialog component
+  const CreateTicketDialog = ({ open, onClose }: DialogProps) => {
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [selectedDiscount, setSelectedDiscount] = useState<string>('');
+
+    const handleSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      try {
+        setIsSubmitting(true);
+        const token = localStorage.getItem('token');
+        const formData = new FormData();
+
+        formData.append('ticket', newTicket.ticket);
+        formData.append('serviceId', newTicket.serviceId);
+        formData.append('client', newTicket.client);
+        formData.append('email', newTicket.email);
+        formData.append('startDate', newTicket.startDate);
+
+        if (newTicket.discountId) {
+          formData.append('discountId', newTicket.discountId);
+        }
+
+        if (newTicket.proof) {
+          formData.append('proof', newTicket.proof);
+        }
+
+        const response = await fetch('/api/tickets/new', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || 'Failed to create ticket');
+        }
+
+        const result = await response.json();
+        console.log('Ticket criado:', result);
+
+        setIsDialogOpen(false);
+        // Reset form
+        setNewTicket({
+          ticket: '',
+          serviceId: '',
+          client: '',
+          email: '',
+          startDate: '',
+          endDate: '',
+          discountId: undefined,
+          proof: undefined,
+        });
+
+        toast({
+          title: 'Success',
+          description: 'Ticket created successfully',
+        });
+
+        await fetchTickets();
+      } catch (error) {
+        console.error('Error creating ticket:', error);
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description:
+            error instanceof Error ? error.message : 'Failed to create ticket',
+        });
+      } finally {
+        setIsSubmitting(false);
+      }
+    };
+
+    return (
+      <Dialog open={open} onOpenChange={onClose}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create New Ticket</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit}>
+            {/* ...existing form fields... */}
+
+            {/* Update Discount Select */}
+            <div className="space-y-2">
+              <Label htmlFor="service">Service</Label>
+              <Select
+                value={newTicket.serviceId || 'select-service'}
+                onValueChange={(value) =>
+                  handleServiceChange(value === 'select-service' ? '' : value)
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Service" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="select-service">
+                    Select a service
+                  </SelectItem>
+                  {services
+                    .filter(
+                      (service) => service._id && service._id.trim() !== ''
+                    )
+                    .map((service) => (
+                      <SelectItem key={service._id} value={service._id}>
+                        {service.name}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <DialogFooter>
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                onClick={handleCreateTicket}
+              >
+                {isSubmitting ? 'Creating...' : 'Create Ticket'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    );
+  };
 
   return (
     <div className="w-full">
@@ -974,7 +1162,7 @@ export function TicketTable() {
               {/* Proof */}
               <div className="grid grid-cols-4 items-center gap-4">
                 <label htmlFor="proof" className="text-right">
-                  Proof
+                  Comprovante
                 </label>
                 <Input
                   id="proof"
@@ -982,16 +1170,46 @@ export function TicketTable() {
                   onChange={(e) =>
                     setNewTicket({
                       ...newTicket,
-                      proof: e.target.files?.[0] || null,
+                      proof: e.target.files?.[0] || undefined,
                     })
                   }
                   className="col-span-3"
                 />
               </div>
+              {/* Add discount selection */}
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="discount" className="text-right">
+                  Discount
+                </Label>
+                <Select
+                  value={newTicket.discountId}
+                  onValueChange={(value) =>
+                    setNewTicket({ ...newTicket, discountId: value })
+                  }
+                >
+                  <div className="col-span-3">
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select discount" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="default">No Discount</SelectItem>
+                      {discounts.map((discount) => (
+                        <SelectItem key={discount._id} value={discount._id}>
+                          {discount.cargo} ({discount.desconto}%)
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </div>
+                </Select>
+              </div>
             </div>
             <DialogFooter>
-              <Button type="button" onClick={handleCreateTicket}>
-                Submit
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                onClick={handleCreateTicket}
+              >
+                {isSubmitting ? 'Creating...' : 'Create Ticket'}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -1108,4 +1326,230 @@ export function TicketTable() {
   );
 }
 
-export default TicketTable;
+interface NewTicket {
+  ticket: string;
+  serviceId: string;
+  client: string;
+  email: string;
+  startDate: string;
+  discountId?: string;
+  proof?: File;
+}
+
+interface CreateTicketDialogProps {
+  open: boolean;
+  onClose: () => void;
+  services: Service[];
+  discounts: Discount[];
+  onTicketCreated: () => void;
+}
+
+const CreateTicketDialog: React.FC<CreateTicketDialogProps> = ({
+  open,
+  onClose,
+  services,
+  discounts,
+  onTicketCreated,
+}) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [newTicket, setNewTicket] = useState<NewTicket>({
+    ticket: '',
+    serviceId: '',
+    client: '',
+    email: '',
+    startDate: '',
+    endDate: '',
+    discountId: undefined,
+    proof: undefined,
+  });
+
+  const handleTicketChange = (
+    field: keyof NewTicket,
+    value: string | File | undefined
+  ) => {
+    setNewTicket((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const handleCreateTicket = async () => {
+    setIsSubmitting(true);
+    try {
+      const token = localStorage.getItem('token');
+      const formData = new FormData();
+
+      formData.append('ticket', newTicket.ticket);
+      formData.append('serviceId', newTicket.serviceId);
+      formData.append('client', newTicket.client);
+      formData.append('email', newTicket.email);
+      formData.append('startDate', newTicket.startDate);
+
+      if (newTicket.discountId) {
+        formData.append('discountId', newTicket.discountId);
+      }
+
+      if (newTicket.proof) {
+        formData.append('proof', newTicket.proof);
+      }
+
+      // Submit the form data to the API
+      const response = await fetch('/api/tickets/new', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create ticket');
+      }
+
+      // Handle success
+      onTicketCreated();
+      setNewTicket({
+        ticket: '',
+        serviceId: '',
+        client: '',
+        email: '',
+        startDate: '',
+        endDate: '',
+        discountId: undefined,
+        proof: undefined,
+      });
+      alert('Ticket created successfully');
+      onClose();
+    } catch (error) {
+      console.error(error);
+      alert('Error creating ticket');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Create New Ticket</DialogTitle>
+        </DialogHeader>
+        <form>
+          <div className="grid gap-4 py-4">
+            {/* Ticket Number */}
+            <div className="space-y-2">
+              <Label htmlFor="ticket">Ticket Number</Label>
+              <Input
+                id="ticket"
+                value={newTicket.ticket}
+                onChange={(e) => handleTicketChange('ticket', e.target.value)}
+                required
+              />
+            </div>
+
+            {/* Client Name */}
+            <div className="space-y-2">
+              <Label htmlFor="client">Client Name</Label>
+              <Input
+                id="client"
+                value={newTicket.client}
+                onChange={(e) => handleTicketChange('client', e.target.value)}
+                required
+              />
+            </div>
+
+            {/* Email */}
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={newTicket.email}
+                onChange={(e) => handleTicketChange('email', e.target.value)}
+                required
+              />
+            </div>
+
+            {/* Start Date */}
+            <div className="space-y-2">
+              <Label htmlFor="startDate">Start Date</Label>
+              <Input
+                id="startDate"
+                type="date"
+                value={newTicket.startDate}
+                onChange={(e) =>
+                  handleTicketChange('startDate', e.target.value)
+                }
+                required
+              />
+            </div>
+
+            {/* Service Selection */}
+            <div className="space-y-2">
+              <Label htmlFor="service">Service</Label>
+              <Select
+                value={newTicket.serviceId}
+                onValueChange={(value) =>
+                  handleTicketChange('serviceId', value)
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a service" />
+                </SelectTrigger>
+                <SelectContent>
+                  {services.map((service) => (
+                    <SelectItem key={service._id} value={service._id}>
+                      {service.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Discount Selection */}
+            <div className="space-y-2">
+              <Label htmlFor="discount">Discount</Label>
+              <Select
+                value={newTicket.discountId || 'no-discount'}
+                onValueChange={(value) =>
+                  handleTicketChange(
+                    'discountId',
+                    value === 'no-discount' ? undefined : value
+                  )
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a discount" />
+                </SelectTrigger>
+              </Select>
+            </div>
+
+            {/* Proof File Upload */}
+            <div className="space-y-2">
+              <Label htmlFor="proof">Proof (Optional)</Label>
+              <Input
+                id="proof"
+                type="file"
+                accept="image/*,application/pdf"
+                onChange={(e) =>
+                  handleTicketChange('proof', e.target.files?.[0])
+                }
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              onClick={handleCreateTicket}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Creating...' : 'Create Ticket'}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+export default CreateTicketDialog;
