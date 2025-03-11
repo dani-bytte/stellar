@@ -4,7 +4,7 @@ import type { NextRequest } from 'next/server';
 // Define rotas protegidas que precisam de autenticação
 const protectedRoutes = ['/dashboard', '/admin', '/config'];
 // Rotas que são acessíveis apenas para visitantes (não logados)
-const authRoutes = ['/login', '/register', '/forgot-password'];
+const authRoutes = ['/login'];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;

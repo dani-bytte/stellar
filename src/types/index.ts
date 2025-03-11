@@ -14,6 +14,5 @@ export interface TicketDistributionChartProps {
   userTicketDistribution: UserTicket[];
 }
 
-export * from './api';
+export * from './chart';
 export * from './user';
-export * from './common';

@@ -1,5 +1,3 @@
-// pages/change-password.tsx
-
 'use client';
 
 import React from 'react';
@@ -106,14 +104,20 @@ export default function ChangePasswordPage() {
               <input
                 type="text"
                 name="fakeusernameremembered"
-                style={{ display: 'none' }}
+                className="hidden"
+                aria-hidden="true"
                 autoComplete="username"
+                title="Campo de usuário escondido para prevenir autopreenchimento"
+                placeholder="Usuário"
               />
               <input
                 type="password"
                 name="fakepasswordremembered"
-                style={{ display: 'none' }}
+                className="hidden"
+                aria-hidden="true"
                 autoComplete="new-password"
+                title="Campo de senha escondido para prevenir autopreenchimento"
+                placeholder="Senha"
               />
 
               <FormField

@@ -7,7 +7,3 @@ export * from './ui/card';
 
 // Layout Components
 export * from './layout/header';
-export * from './layout/sidebar';
-// ...outros componentes de layout
-
-// Outros grupos de componentes...

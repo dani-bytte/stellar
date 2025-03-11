@@ -1,8 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Add experimental flag for http-proxy warning
+  // Movido de experimental.serverComponentsExternalPackages para a raiz
+  serverExternalPackages: ['http-proxy'],
+
   experimental: {
-    serverComponentsExternalPackages: ['http-proxy'],
+    // Outros configs experimentais podem permanecer
   },
 
   // Existing redirects
@@ -54,9 +56,16 @@ const nextConfig = {
     return config;
   },
 
-  // Existing image config
+  // Otimizar geração de imagens
   images: {
     domains: ['minios3.muonityzone.top'],
+    formats: ['image/avif', 'image/webp'],
+    minimumCacheTTL: 60,
+  },
+
+  // Adicionar linting em tempo de build
+  eslint: {
+    ignoreDuringBuilds: false,
   },
 };
 
