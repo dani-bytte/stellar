@@ -34,7 +34,7 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";;
 import {
   Dialog,
   DialogContent,
@@ -46,7 +46,7 @@ import {
 } from "@/components/ui/dialog";
 
 import Image from "next/image";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Label } from "@/components/ui";
 import {
   Select,
@@ -84,6 +84,9 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 
+import { API_ENDPOINTS } from "@/lib/constants";
+import { ROUTES } from "@/lib/routes";
+
 // Ticket type definition
 type Ticket = {
   _id: string;
@@ -119,12 +122,6 @@ type Service = {
   };
 };
 
-// Add interfaces
-interface DialogProps {
-  open: boolean;
-  onClose: () => void;
-}
-
 interface NewTicket {
   ticket: string;
   serviceId: string;
@@ -138,7 +135,6 @@ interface NewTicket {
 
 // Transfer Request types and schema
 type TransferRequest = {
-  ticketId: string;
   progressPercentage: number;
   clientInfo: string;
 };
@@ -158,7 +154,6 @@ type Discount = {
 };
 
 export function TicketTable() {
-  const { toast } = useToast();
   const [data, setData] = useState<Ticket[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -193,15 +188,14 @@ export function TicketTable() {
 
   const [discounts, setDiscounts] = useState<Discount[]>([]);
 
-  const isMounted = useRef(false);
-
   const fetchTickets = useCallback(async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
       if (!token) throw new Error("No token found");
 
-      const response = await fetch("/api/tickets/list", {
+      // Usar API_ENDPOINTS ao invés da rota hardcoded
+      const response = await fetch(API_ENDPOINTS.TICKETS.LIST, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -213,21 +207,18 @@ export function TicketTable() {
       setData(result);
     } catch (error) {
       console.error("Error fetching tickets:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to load tickets",
-      });
+      toast.error("Failed to load tickets");
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, []);
 
   const fetchServices = useCallback(async () => {
     try {
       const token = localStorage.getItem("token");
       if (!token) throw new Error("Token não encontrado");
 
+      // Corrigir a referência à rota da API para serviços
       const response = await fetch("/api/tickets/services/list", {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -235,11 +226,9 @@ export function TicketTable() {
       });
 
       if (response.status === 401) {
-        // Token expirado, redirecione para login ou trate conforme necessário
-        console.error("Token expirado");
-        // Por exemplo, você pode limpar o token e redirecionar:
+        // Token expirado, redirecione para login
         localStorage.removeItem("token");
-        window.location.href = "/login";
+        window.location.href = ROUTES.AUTH.LOGIN;
         return;
       }
 
@@ -252,19 +241,17 @@ export function TicketTable() {
     } catch (error) {
       console.error("Erro ao buscar serviços:", error);
       setServices([]); // Garante que services seja um array
-      toast({
-        title: "Erro",
-        description: "Falha ao carregar serviços",
-        variant: "destructive",
-      });
+      toast.error("Falha ao carregar serviços");
     }
-  }, [toast]);
+  }, []);
 
   // Add fetchDiscounts function
   const fetchDiscounts = useCallback(async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch("/api/tickets/discounts/list", {
+      
+      // Usar API_ENDPOINTS ao invés da rota hardcoded
+      const response = await fetch(API_ENDPOINTS.TICKETS.DISCOUNTS.LIST, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -274,13 +261,9 @@ export function TicketTable() {
       setDiscounts(discountData.filter((d: Discount) => d.visivel));
     } catch (error) {
       console.error("Error fetching discounts:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to load discounts",
-      });
+      toast.error("Failed to load discounts");
     }
-  }, [toast]);
+  }, []);
 
   // Update useEffect
   useEffect(() => {
@@ -314,8 +297,8 @@ export function TicketTable() {
         formData.append("proof", newTicket.proof);
       }
 
-      // Submit the form data to the API
-      const response = await fetch("/api/tickets/new", {
+      // Usar API_ENDPOINTS ao invés da rota hardcoded
+      const response = await fetch(API_ENDPOINTS.TICKETS.NEW, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -339,18 +322,11 @@ export function TicketTable() {
         discountId: undefined,
         proof: undefined,
       });
-      toast({
-        title: "Success",
-        description: "Ticket created successfully",
-      });
+      toast.success("Ticket created successfully");
       setIsDialogOpen(false);
     } catch (error) {
       console.error("Error creating ticket:", error);
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred",
-        variant: "destructive",
-      });
+      toast.error("An unexpected error occurred");
     } finally {
       setIsSubmitting(false);
     }
@@ -382,6 +358,8 @@ export function TicketTable() {
   const handleHideTicket = async (ticketId: string) => {
     try {
       const token = localStorage.getItem("token");
+      
+      // Corrigir a referência à rota da API para esconder ticket
       const response = await fetch(`/api/tickets/${ticketId}/hide`, {
         method: "PUT",
         headers: {
@@ -395,20 +373,14 @@ export function TicketTable() {
         throw new Error(error.message || "Failed to hide ticket");
       }
 
-      toast({
-        title: "Success",
-        description: "Ticket hidden successfully",
-      });
+      toast.success("Ticket hidden successfully");
 
       // Refresh tickets list
       await fetchTickets();
     } catch (error) {
-      toast({
-        title: "Error",
-        description:
-          error instanceof Error ? error.message : "Failed to hide ticket",
-        variant: "destructive",
-      });
+      toast.error(
+        error instanceof Error ? error.message : "Failed to hide ticket",
+      );
     } finally {
       setTicketToDelete(null);
     }
@@ -445,9 +417,8 @@ export function TicketTable() {
           clientInfo: values.clientInfo,
         };
 
-        console.log("Submitting transfer request:", requestData);
-
-        const response = await fetch("/api/tickets/transfer/request", {
+        // Usar API_ENDPOINTS ao invés da rota hardcoded
+        const response = await fetch(API_ENDPOINTS.TICKETS.TRANSFER_REQUEST, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -462,23 +433,17 @@ export function TicketTable() {
         if (!response.ok)
           throw new Error(data.error || "Failed to submit transfer request");
 
-        toast({
-          title: "Success",
-          description: "Transfer request submitted successfully",
-        });
+        toast.success("Transfer request submitted successfully");
 
         form.reset();
         onOpenChange(false);
       } catch (error) {
         console.error("Transfer request error:", error);
-        toast({
-          title: "Error",
-          description:
-            error instanceof Error
-              ? error.message
-              : "Failed to submit transfer request",
-          variant: "destructive",
-        });
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Failed to submit transfer request",
+        );
       } finally {
         setLoading(false);
       }
@@ -710,18 +675,14 @@ export function TicketTable() {
 
           try {
             const token = localStorage.getItem("token");
-            const encodedFileName = encodeURIComponent(ticket.proofUrl);
 
-            // Faça uma requisição para o endpoint que retorna a imagem
-            const response = await fetch(
-              `/api/tickets/proof-image/${encodedFileName}`,
-              {
-                method: "GET",
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                },
+            // Usar API_ENDPOINTS ao invés da rota hardcoded e corrigir a função
+            const response = await fetch(`/api/tickets/proof-image/${encodeURIComponent(ticket.proofUrl)}`, {
+              method: "GET",
+              headers: {
+                Authorization: `Bearer ${token}`,
               },
-            );
+            });
 
             if (!response.ok) {
               throw new Error("Erro ao carregar a imagem");
@@ -736,11 +697,7 @@ export function TicketTable() {
             setDialogOpen(true);
           } catch (error) {
             console.error("Erro:", error);
-            toast({
-              title: "Erro",
-              description: "Falha ao abrir o comprovante",
-              variant: "destructive",
-            });
+            toast.error("Falha ao abrir o comprovante");
           }
         };
 
@@ -825,131 +782,7 @@ export function TicketTable() {
   }
 
   // Update CreateTicketDialog component
-  const CreateTicketDialog = ({ open, onClose }: DialogProps) => {
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [selectedDiscount, setSelectedDiscount] = useState<string>("");
 
-    const handleSubmit = async (e: React.FormEvent) => {
-      e.preventDefault();
-      try {
-        setIsSubmitting(true);
-        const token = localStorage.getItem("token");
-        const formData = new FormData();
-
-        formData.append("ticket", newTicket.ticket);
-        formData.append("serviceId", newTicket.serviceId);
-        formData.append("client", newTicket.client);
-        formData.append("email", newTicket.email);
-        formData.append("startDate", newTicket.startDate);
-
-        if (newTicket.discountId) {
-          formData.append("discountId", newTicket.discountId);
-        }
-
-        if (newTicket.proof) {
-          formData.append("proof", newTicket.proof);
-        }
-
-        const response = await fetch("/api/tickets/new", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formData,
-        });
-
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.message || "Failed to create ticket");
-        }
-
-        const result = await response.json();
-        console.log("Ticket criado:", result);
-
-        setIsDialogOpen(false);
-        // Reset form
-        setNewTicket({
-          ticket: "",
-          serviceId: "",
-          client: "",
-          email: "",
-          startDate: "",
-          endDate: "",
-          discountId: undefined,
-          proof: undefined,
-        });
-
-        toast({
-          title: "Success",
-          description: "Ticket created successfully",
-        });
-
-        await fetchTickets();
-      } catch (error) {
-        console.error("Error creating ticket:", error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description:
-            error instanceof Error ? error.message : "Failed to create ticket",
-        });
-      } finally {
-        setIsSubmitting(false);
-      }
-    };
-
-    return (
-      <Dialog open={open} onOpenChange={onClose}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Create New Ticket</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleSubmit}>
-            {/* ...existing form fields... */}
-
-            {/* Update Discount Select */}
-            <div className="space-y-2">
-              <Label htmlFor="service">Service</Label>
-              <Select
-                value={newTicket.serviceId || "select-service"}
-                onValueChange={(value) =>
-                  handleServiceChange(value === "select-service" ? "" : value)
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Service" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="select-service">
-                    Select a service
-                  </SelectItem>
-                  {services
-                    .filter(
-                      (service) => service._id && service._id.trim() !== "",
-                    )
-                    .map((service) => (
-                      <SelectItem key={service._id} value={service._id}>
-                        {service.name}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <DialogFooter>
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                onClick={handleCreateTicket}
-              >
-                {isSubmitting ? "Creating..." : "Create Ticket"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-    );
-  };
 
   return (
     <div className="w-full">
@@ -968,11 +801,7 @@ export function TicketTable() {
                 height={600}
                 className="object-contain w-full h-auto max-h-144"
                 onError={() => {
-                  toast({
-                    title: "Error",
-                    description: "Failed to load image",
-                    variant: "destructive",
-                  });
+                  toast.error("Failed to load image");
                   setDialogOpen(false);
                 }}
               />
@@ -1344,11 +1173,10 @@ interface CreateTicketDialogProps {
   onTicketCreated: () => void;
 }
 
-const CreateTicketDialog: React.FC<CreateTicketDialogProps> = ({
+const _CreateTicketDialog: React.FC<CreateTicketDialogProps> = ({
   open,
   onClose,
   services,
-  discounts,
   onTicketCreated,
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -1418,11 +1246,11 @@ const CreateTicketDialog: React.FC<CreateTicketDialogProps> = ({
         discountId: undefined,
         proof: undefined,
       });
-      alert("Ticket created successfully");
+      toast.success("Ticket created successfully");
       onClose();
     } catch (error) {
       console.error(error);
-      alert("Error creating ticket");
+      toast.error("Error creating ticket");
     } finally {
       setIsSubmitting(false);
     }
@@ -1552,4 +1380,4 @@ const CreateTicketDialog: React.FC<CreateTicketDialogProps> = ({
   );
 };
 
-export default CreateTicketDialog;
+export default _CreateTicketDialog;

@@ -1,90 +1,32 @@
 import * as React from "react";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
-interface FormSectionProps {
-  title: string;
+interface FormSectionProps extends React.HTMLAttributes<HTMLDivElement> {
+  title?: string;
   description?: string;
-  children: React.ReactNode;
-  onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
-  submitText?: string;
-  cancelText?: string;
-  onCancel?: () => void;
-  isSubmitting?: boolean;
-  className?: string;
-  readOnly?: boolean;
-  extraActions?: React.ReactNode;
-  layout?: "vertical" | "horizontal";
 }
 
 export function FormSection({
   title,
   description,
   children,
-  onSubmit,
-  submitText = "Save",
-  cancelText = "Cancel",
-  onCancel,
-  isSubmitting = false,
-  className = "",
-  readOnly = false,
-  extraActions,
-  layout = "vertical",
+  className,
+  ...props
 }: FormSectionProps) {
-  const contentClass =
-    layout === "horizontal" ? "grid grid-cols-1 md:grid-cols-2 gap-4" : "";
-
   return (
-    <Card className={className}>
-      <form onSubmit={readOnly ? (e) => e.preventDefault() : onSubmit}>
-        <CardHeader>
-          <CardTitle>{title}</CardTitle>
-          {description && <CardDescription>{description}</CardDescription>}
-        </CardHeader>
-        <CardContent className={contentClass}>
-          {readOnly
-            ? React.Children.map(children, (child) =>
-                React.isValidElement(child)
-                  ? React.cloneElement(child, {
-                      disabled: true,
-                    } as React.HTMLAttributes<HTMLElement>)
-                  : child,
-              )
-            : children}
-        </CardContent>
-        <CardFooter className="flex justify-end space-x-2">
-          {extraActions}
-          {!readOnly && (
-            <>
-              {onCancel && (
-                <Button
-                  variant="outline"
-                  type="button"
-                  onClick={onCancel}
-                  disabled={isSubmitting}
-                >
-                  {cancelText}
-                </Button>
-              )}
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Saving..." : submitText}
-              </Button>
-            </>
+    <div
+      className={cn("space-y-4 rounded-lg border p-6 shadow-sm", className)}
+      {...props}
+    >
+      {(title || description) && (
+        <div className="mb-4">
+          {title && <h3 className="text-lg font-semibold">{title}</h3>}
+          {description && (
+            <p className="text-sm text-muted-foreground">{description}</p>
           )}
-          {readOnly && onCancel && (
-            <Button variant="outline" onClick={onCancel}>
-              Close
-            </Button>
-          )}
-        </CardFooter>
-      </form>
-    </Card>
+        </div>
+      )}
+      {children}
+    </div>
   );
 }

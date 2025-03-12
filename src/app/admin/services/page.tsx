@@ -3,10 +3,16 @@
 import * as React from "react";
 import withAuth from "@/components/withAuth";
 import ServiceTable from "./newservice";
+import { AdminLayout } from "@/components/layouts/admin-layout";
+import { Button } from "@/components/ui/button";
+import { PlusCircle } from "lucide-react";
+import { useState } from "react";
+import { ServiceFormSheet } from "./ServiceFormSheet";
 
 const ServicesPage = () => {
   const [data, setData] = React.useState([]);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [open, setOpen] = useState(false);
 
   const fetchServices = async () => {
     try {
@@ -33,18 +39,35 @@ const ServicesPage = () => {
   }, []);
 
   return (
-    <div className="flex flex-1 flex-col gap-4 px-4 py-10">
-      <div className="mx-auto h-24 w-full max-w-5xl">
-        <h1 className="text-3xl font-bold mb-3">Available Services</h1>
-      </div>
-      <div className="mx-auto w-full max-w-5xl">
-        <ServiceTable
-          data={data}
-          isLoading={isLoading}
-          fetchServices={fetchServices}
-        />
-      </div>
-    </div>
+    <AdminLayout 
+      title="Available Services"
+      description="Manage the services available in the system"
+      breadcrumbs={[
+        { label: "Dashboard", href: "/admin" },
+        { label: "Services", href: "/admin/services" }
+      ]}
+      actions={
+        <Button onClick={() => setOpen(true)}>
+          <PlusCircle className="mr-2 h-4 w-4" />
+          New Service
+        </Button>
+      }
+    >
+      <ServiceTable
+        data={data}
+        isLoading={isLoading}
+        fetchServices={fetchServices}
+        onCreateNew={() => setOpen(true)}
+      />
+      
+      <ServiceFormSheet
+        open={open}
+        onOpenChange={setOpen}
+        onSuccess={() => {
+          fetchServices();
+        }}
+      />
+    </AdminLayout>
   );
 };
 

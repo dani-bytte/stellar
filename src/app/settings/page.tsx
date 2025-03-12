@@ -263,7 +263,7 @@ const ProfilePage = () => {
                   <span>Email Notifications</span>
                   <Switch
                     checked={profile.notifications?.email}
-                    onCheckedChange={(checked) => {
+                    onCheckedChange={() => {
                       /* Handle change */
                     }}
                   />
@@ -272,7 +272,7 @@ const ProfilePage = () => {
                   <span>WhatsApp Notifications</span>
                   <Switch
                     checked={profile.notifications?.whatsapp}
-                    onCheckedChange={(checked) => {
+                    onCheckedChange={() => {
                       /* Handle change */
                     }}
                   />
@@ -289,7 +289,7 @@ const ProfilePage = () => {
                   <span>Theme</span>
                   <Select
                     value={profile.theme}
-                    onValueChange={(value) => {
+                    onValueChange={() => {
                       /* Handle change */
                     }}
                   >

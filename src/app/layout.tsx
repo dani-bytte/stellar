@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import * as React from "react";
 import "./globals.css";
 import { ThemeProvider } from "next-themes";
 import ClientLayout from "./ClientLayout";
 import { Separator } from "@/components/ui/separator";
 import Headers from "@/components/Header";
+
 
 export const metadata: Metadata = {
   title: "Create Next App",

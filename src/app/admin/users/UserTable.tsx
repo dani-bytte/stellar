@@ -54,7 +54,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -65,6 +65,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { API_ENDPOINTS } from "@/lib/constants";
 
 // Updated User type
 export type User = {
@@ -84,7 +85,10 @@ export type User = {
 };
 
 export function UserTable() {
-  const { toast } = useToast();
+  // Remoção desta linha, que causa o erro
+  // const { toast } = useToast();
+  // Agora podemos usar diretamente o toast importado
+  
   const [data, setData] = React.useState<User[]>([]);
   const [, setLoading] = React.useState<boolean>(true);
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -111,7 +115,8 @@ export function UserTable() {
   const fetchUsers = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch("/api/auth/userinfo", {
+      // Usar API_ENDPOINTS ao invés da rota hardcoded
+      const response = await fetch(API_ENDPOINTS.AUTH.USERS, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -140,7 +145,8 @@ export function UserTable() {
       const token = localStorage.getItem("token");
       const params = new URLSearchParams({ user: userId });
 
-      const response = await fetch(`/api/home/profile?${params}`, {
+      // Usar API_ENDPOINTS ao invés da rota hardcoded
+      const response = await fetch(`${API_ENDPOINTS.PROFILE.GET}?${params}`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -165,7 +171,8 @@ export function UserTable() {
   const handleRegisterUser = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch("/api/auth/register", {
+      // Usar API_ENDPOINTS ao invés da rota hardcoded
+      const response = await fetch(API_ENDPOINTS.AUTH.REGISTER, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -177,10 +184,9 @@ export function UserTable() {
       const data = await response.json();
 
       if (!response.ok) {
-        toast({
-          title: "Error",
-          description: data.error || "Failed to register user",
-          variant: "destructive",
+        // Correção: usar toast.error
+        toast.error("Failed to register user", {
+          description: data.error || "Please try again later"
         });
         return;
       }
@@ -189,25 +195,20 @@ export function UserTable() {
       setNewUser({ username: "", email: "" });
       await fetchUsers();
 
-      toast({
-        title: "Success",
-        description: "User registered successfully",
-      });
+      // Correção: usar toast.success
+      toast.success("User registered successfully");
     } catch (error) {
       console.error("Error registering user:", error);
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred",
-        variant: "destructive",
-      });
+      // Correção: usar toast.error
+      toast.error("An unexpected error occurred");
     }
   };
 
   const handleDeactivateUser = async (userId: string) => {
     try {
       const token = localStorage.getItem("token");
-      // Fix: Remove colon from URL parameter
-      const response = await fetch(`/api/auth/users/${userId}/deactivate`, {
+      // Usar API_ENDPOINTS ao invés da rota hardcoded
+      const response = await fetch(API_ENDPOINTS.AUTH.DEACTIVATE_USER(userId), {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -231,19 +232,15 @@ export function UserTable() {
         }
       }
 
-      toast({
-        title: "Success",
-        description: data.message || "User deactivated successfully",
+      // Correção: usar toast.success
+      toast.success("User deactivated successfully", {
+        description: data.message || ""
       });
 
       await fetchUsers();
     } catch (error) {
-      toast({
-        title: "Error",
-        description:
-          error instanceof Error ? error.message : "Failed to deactivate user",
-        variant: "destructive",
-      });
+      // Correção: usar toast.error
+      toast.error(error instanceof Error ? error.message : "Failed to deactivate user");
     } finally {
       setUserToDeactivate(null);
       setIsDeactivateDialogOpen(false);

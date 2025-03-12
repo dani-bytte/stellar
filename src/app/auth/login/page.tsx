@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -18,6 +17,8 @@ import {
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
+import { setAuthToken } from "@/utils/authUtils";
+import { ROUTES } from "@/lib/routes";
 
 // Schema de Validação para Login
 const loginSchema = z.object({
@@ -28,8 +29,8 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 const LoginPage = () => {
-  const router = useRouter();
-  const [, setUsername] = useState("");
+
+  const [isLoading, setIsLoading] = useState(false);
 
   // Configuração do React Hook Form para Login
   const loginForm = useForm<LoginFormValues>({
@@ -40,37 +41,61 @@ const LoginPage = () => {
     },
   });
 
-  const handleLogin = async (values: LoginFormValues) => {
+  // Correto uso do handleSubmit do React Hook Form
+  const onSubmit = async (values: LoginFormValues) => {
+    setIsLoading(true);
+
     try {
+      console.log("Login: Enviando requisição de login");
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
+        body: JSON.stringify(values)
       });
 
       const data = await response.json();
+      console.log("Login: Resposta recebida", { ok: response.ok });
 
       if (response.ok) {
-        localStorage.setItem("token", data.token);
+        // Usar a função setAuthToken que configura tanto localStorage quanto cookie
+        setAuthToken(data.token);
+        
+        // Armazenar outros dados do usuário conforme a resposta da API
         localStorage.setItem("role", data.role);
         localStorage.setItem("hasProfile", String(data.hasProfile));
-        localStorage.setItem(
-          "isTemporaryPassword",
-          String(data.isTemporaryPassword),
-        );
+        localStorage.setItem("isTemporaryPassword", String(data.isTemporaryPassword));
 
-        console.log(data);
+        toast.success("Login realizado com sucesso");
+        console.log("Login bem-sucedido. Token salvo.");
 
-        const redirectUrl = data.role === "admin" ? "/admin" : "/home";
-        router.push(redirectUrl);
+        // Verificar se precisa alterar senha temporária ou completar perfil
+        if (data.isTemporaryPassword) {
+          // Redirecionar para página de alteração de senha
+          window.location.href = ROUTES.AUTH.PASSWORD;
+        } else if (!data.hasProfile) {
+          // Redirecionar para página de completar perfil
+          window.location.href = ROUTES.AUTH.PROFILE;
+        } else {
+          // Redirecionamento normal baseado na role
+          const redirectUrl = data.role === "admin" ? ROUTES.REDIRECT.ADMIN : ROUTES.REDIRECT.USER;
+          console.log(`Login: Redirecionando para ${redirectUrl}`);
+          window.location.href = redirectUrl;
+        }
       } else {
-        toast.error(data.error);
-        loginForm.setError("root", { message: data.error });
+        console.error("Login: Erro na autenticação", data);
+        toast.error(data.message || "Credenciais inválidas");
+        loginForm.setError("root", { 
+          message: data.message || "Credenciais inválidas" 
+        });
       }
     } catch (error) {
-      const errorMessage = "Erro ao fazer login. Por favor, tente novamente.";
-      toast.error(errorMessage);
-      loginForm.setError("root", { message: errorMessage });
+      console.error("Login: Erro inesperado", error);
+      toast.error("Erro ao fazer login");
+      loginForm.setError("root", { 
+        message: "Erro ao fazer login. Por favor, tente novamente." 
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -86,9 +111,10 @@ const LoginPage = () => {
         <CardContent>
           <Form {...loginForm}>
             <form
-              onSubmit={loginForm.handleSubmit(handleLogin)}
+              // Usar o wrapper handleSubmit do React Hook Form
+              onSubmit={loginForm.handleSubmit(onSubmit)}
               className="space-y-6"
-              autoComplete="off" // Previne preenchimento automático no formulário de login
+              autoComplete="off"
             >
               <FormField
                 control={loginForm.control}
@@ -99,7 +125,7 @@ const LoginPage = () => {
                     <FormControl>
                       <Input
                         placeholder="Digite seu username"
-                        autoComplete="username" // Define o autocomplete correto
+                        autoComplete="username"
                         {...field}
                       />
                     </FormControl>
@@ -117,7 +143,7 @@ const LoginPage = () => {
                       <Input
                         type="password"
                         placeholder="Digite sua senha"
-                        autoComplete="current-password" // Define o autocomplete correto
+                        autoComplete="current-password"
                         {...field}
                       />
                     </FormControl>
@@ -125,8 +151,16 @@ const LoginPage = () => {
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full">
-                Login
+              
+              {/* Mostrar erro global de formulário se existir */}
+              {loginForm.formState.errors.root && (
+                <p className="text-sm font-medium text-red-500">
+                  {loginForm.formState.errors.root.message}
+                </p>
+              )}
+              
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? "Carregando..." : "Login"}
               </Button>
             </form>
           </Form>

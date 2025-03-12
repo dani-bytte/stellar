@@ -1,46 +1,52 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { ROUTES } from "@/lib/routes";
+import { JWT_CONFIG } from "@/lib/constants";
 
-// Define rotas protegidas que precisam de autenticação
-const protectedRoutes = ["/dashboard", "/admin", "/config"];
-// Rotas que são acessíveis apenas para visitantes (não logados)
-const authRoutes = ["/login"];
-
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  console.log(`Middleware: Processando rota ${pathname}`);
+
+  // Bypass para rotas de API - todas as validações de API devem ser tratadas pelos próprios endpoints
+  if (pathname.startsWith('/api/')) {
+    return NextResponse.next();
+  }
+
+  // Listas planas para checagem de rotas
+  const protectedRoutes = Object.values(ROUTES.PROTECTED);
+  const authRoutes = Object.values(ROUTES.AUTH);
 
   // Recupera token de autenticação dos cookies
-  const token = request.cookies.get("auth-token")?.value;
-  const isAuthenticated = !!token;
-
-  // Redireciona usuários autenticados para longe das páginas de login
-  if (
-    isAuthenticated &&
-    authRoutes.some((route) => pathname.startsWith(route))
-  ) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+  const token = request.cookies.get(JWT_CONFIG.COOKIE_NAME)?.value;
+  
+  console.log(`Middleware: Token encontrado: ${!!token}`);
+  
+  // Rotas de autenticação - permitir acesso sem token
+  if (authRoutes.some(route => pathname.startsWith(route))) {
+    // Se tiver token, apenas prosseguir, deixe a lógica de redirecionamento 
+    // para o componente cliente que vai validar o token usando a API
+    return NextResponse.next();
+  }
+  
+  // Rotas protegidas - verificar apenas a presença do token
+  if (protectedRoutes.some(route => pathname.startsWith(route))) {
+    // Se não tiver token, redireciona para login
+    if (!token) {
+      console.log(`Middleware: Sem token, redirecionando para login`);
+      return NextResponse.redirect(new URL(ROUTES.REDIRECT.LOGIN, request.url));
+    }
+    
+    // Se tiver token, permite acesso e deixa a validação para o componente
+    return NextResponse.next();
   }
 
-  // Redireciona usuários não autenticados para o login
-  if (
-    !isAuthenticated &&
-    protectedRoutes.some((route) => pathname.startsWith(route))
-  ) {
-    return NextResponse.redirect(new URL("/login", request.url));
-  }
-
+  // Para outras rotas, apenas continua sem interferir
   return NextResponse.next();
 }
 
 // Configuração para especificar em quais rotas o middleware será executado
 export const config = {
   matcher: [
-    /*
-     * Combina todas as rotas de solicitação exceto:
-     * - _next (arquivos estáticos do Next.js)
-     * - public (arquivos na pasta public)
-     * - favicon.ico (arquivo favicon)
-     */
     "/((?!_next|public|favicon.ico).*)",
   ],
 };

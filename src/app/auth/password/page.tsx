@@ -16,6 +16,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import { API_ENDPOINTS } from "@/lib/constants";
+import { ROUTES } from "@/lib/routes";
 
 // Schema de Validação para Alteração de Senha
 const changePasswordSchema = z.object({
@@ -51,7 +53,8 @@ export default function ChangePasswordPage() {
         return;
       }
 
-      const response = await fetch("/api/auth/change-password", {
+      // Usar API_ENDPOINTS ao invés da rota hardcoded
+      const response = await fetch(API_ENDPOINTS.AUTH.CHANGE_PASSWORD, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -72,10 +75,10 @@ export default function ChangePasswordPage() {
         // Check profile status
         const hasProfile = localStorage.getItem("hasProfile") === "true";
         if (!hasProfile) {
-          router.push("/auth/profile");
+          router.push(ROUTES.AUTH.PROFILE);
         } else {
           const role = localStorage.getItem("role");
-          router.push(role === "admin" ? "/admin" : "/home");
+          router.push(role === "admin" ? ROUTES.REDIRECT.ADMIN : ROUTES.REDIRECT.USER);
         }
       } else {
         changePasswordForm.setError("root", { message: data.error });

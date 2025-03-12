@@ -2,7 +2,6 @@
 
 "use client";
 
-import React from "react";
 import { ModeToggle } from "@/components/ui/button_thema"; // Ajuste conforme sua implementação
 
 export default function Header() {

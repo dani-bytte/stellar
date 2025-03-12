@@ -1,10 +1,12 @@
-// components/withAuth.tsx
 "use client";
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { NextRouter } from "next/router";
-import type { UseFormReturn } from "react-hook-form";
+import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { ROUTES } from "@/lib/routes";
+import { validateToken, clearAuthToken } from "@/utils/authUtils";
+import { LOCAL_STORAGE_KEYS } from "@/lib/constants";
 
 interface WithAuthProps {
   requiredRole?: string;
@@ -12,7 +14,7 @@ interface WithAuthProps {
 
 const withAuth = <P extends object>(
   WrappedComponent: React.ComponentType<P>,
-  { requiredRole }: WithAuthProps,
+  { requiredRole }: WithAuthProps = {}
 ) => {
   const ComponentWithAuth = (props: P) => {
     const router = useRouter();
@@ -21,89 +23,87 @@ const withAuth = <P extends object>(
 
     useEffect(() => {
       const checkAuth = async () => {
-        const token = localStorage.getItem("token");
-        const role = localStorage.getItem("role");
-
-        if (!token || (requiredRole && role !== requiredRole)) {
-          router.push("/login");
-        } else {
+        try {
+          console.log("withAuth: Verificando autenticação");
+          const token = localStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN);
+          
+          if (!token) {
+            console.log("withAuth: Token não encontrado");
+            throw new Error("No token found");
+          }
+          
+          // Verifica se o token é válido fazendo uma requisição ao endpoint de validação
+          const isValid = await validateToken(token);
+          
+          if (!isValid) {
+            console.log("withAuth: Token inválido");
+            clearAuthToken();
+            throw new Error("Token inválido");
+          }
+          
+          console.log("withAuth: Token verificado com sucesso");
+          
+          // Verifica requisitos de perfil e senha temporária
+          const isTemporaryPassword = localStorage.getItem(LOCAL_STORAGE_KEYS.IS_TEMPORARY_PASSWORD) === "true";
+          const hasProfile = localStorage.getItem(LOCAL_STORAGE_KEYS.HAS_PROFILE) === "true";
+          
+          if (isTemporaryPassword) {
+            console.log("withAuth: Usuário com senha temporária, redirecionando");
+            router.push(ROUTES.AUTH.PASSWORD);
+            return;
+          }
+          
+          if (!hasProfile) {
+            console.log("withAuth: Usuário sem perfil, redirecionando");
+            router.push(ROUTES.AUTH.PROFILE);
+            return;
+          }
+          
+          // Verifica a role se necessário
+          if (requiredRole) {
+            const userRole = localStorage.getItem(LOCAL_STORAGE_KEYS.ROLE);
+            console.log(`withAuth: Verificando role - requerida: ${requiredRole}, atual: ${userRole}`);
+            
+            if (userRole !== requiredRole && userRole !== "admin") {
+              console.log("withAuth: Role inválida, redirecionando para unauthorized");
+              router.push(ROUTES.REDIRECT.UNAUTHORIZED);
+              return;
+            }
+          }
+          
           setIsAuthenticated(true);
+        } catch (error) {
+          console.error("withAuth: Erro na verificação", error);
+          
+          toast.error("Sessão expirada", { 
+            description: "Por favor, faça login novamente" 
+          });
+          
+          router.push(ROUTES.REDIRECT.LOGIN);
+        } finally {
+          setLoading(false);
         }
-        setLoading(false);
       };
 
       checkAuth();
-    }, [router]); // Remove `requiredRole` from the dependency array
+    }, [router, requiredRole]);
 
     if (loading) {
-      return <div>Loading...</div>;
+      return (
+        <div className="flex h-screen w-screen items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      );
     }
 
     if (!isAuthenticated) {
-      return null;
+      return null; // Não renderiza nada enquanto redireciona
     }
 
     return <WrappedComponent {...props} />;
   };
 
   return ComponentWithAuth;
-};
-
-interface LoginFormValues {
-  email: string;
-  password: string;
-}
-
-interface LoginResponse {
-  token: string;
-  role: string;
-  isTemporaryPassword: boolean;
-  hasProfile: boolean;
-  redirectUrl: string;
-  error?: string;
-}
-
-const handleLogin = async (
-  values: LoginFormValues,
-  form: UseFormReturn<LoginFormValues>,
-  router: NextRouter,
-) => {
-  try {
-    const response = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(values),
-    });
-
-    const data = await response.json();
-
-    if (response.ok) {
-      // Armazenar todos os dados necessários
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("role", data.role);
-      localStorage.setItem(
-        "isTemporaryPassword",
-        data.isTemporaryPassword.toString(),
-      );
-      localStorage.setItem("hasProfile", data.hasProfile.toString());
-
-      // Redirecionar baseado no estado do usuário
-      if (data.isTemporaryPassword) {
-        router.push("/auth/password");
-      } else if (!data.hasProfile) {
-        router.push("/auth/profile");
-      } else {
-        router.push(data.role === "admin" ? "/admin" : "/home");
-      }
-    } else {
-      form.setError("root", { message: data.error });
-    }
-  } catch (error) {
-    console.error("Erro ao fazer login:", error);
-    form.setError("root", {
-      message: "Erro ao fazer login. Por favor, tente novamente.",
-    });
-  }
 };
 
 export default withAuth;

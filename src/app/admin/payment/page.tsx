@@ -3,6 +3,8 @@
 import * as React from "react";
 import withAuth from "@/components/withAuth";
 import PaymentTable from "./payments";
+import { authenticatedFetch } from "@/utils/authUtils";
+import { toast } from "sonner";
 
 interface Payment {
   _id: string;
@@ -24,13 +26,12 @@ const PaymentsPage = () => {
 
   const fetchPayments = async () => {
     try {
-      const token = localStorage.getItem("token");
-      if (!token) throw new Error("No token found");
-
-      const response = await fetch("/api/home/admin/payments/list", {
+      setIsLoading(true);
+      
+      // Corrigir a referência à rota da API para pagamentos
+      const response = await authenticatedFetch("/api/home/admin/payments/list", {
         method: "GET",
         headers: {
-          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
       });
@@ -44,6 +45,9 @@ const PaymentsPage = () => {
       setPayments(paymentData);
     } catch (error) {
       console.error("Error fetching payments:", error);
+      if (!(error instanceof Error && error.message === "Token não encontrado")) {
+        toast.error("Erro ao carregar pagamentos");
+      }
     } finally {
       setIsLoading(false);
     }

@@ -16,7 +16,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ArrowUpDown, ChevronDown, MoreHorizontal } from "lucide-react";
+import { ArrowUpDown, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -50,8 +50,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useToast } from "@/hooks/use-toast";
-import { ToastAction } from "@/components/ui/toast";
+import { toast } from "sonner";
 
 interface Discount {
   _id: string;
@@ -71,7 +70,6 @@ const DiscountTable: React.FC<DiscountTableProps> = ({
   isLoading,
   fetchDiscounts,
 }) => {
-  const { toast } = useToast();
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     [],
@@ -100,21 +98,19 @@ const DiscountTable: React.FC<DiscountTableProps> = ({
 
       if (!response.ok) throw new Error("Failed to delete");
 
-      toast({
-        description: "Discount has been deleted successfully",
-        action: (
-          <ToastAction altText="Undo delete" onClick={() => fetchDiscounts()}>
-            Undo
-          </ToastAction>
-        ),
+      toast.success("Discount has been deleted successfully", {
+        action: {
+          label: "Undo",
+          onClick: () => fetchDiscounts(),
+        },
       });
       fetchDiscounts();
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Could not delete discount.",
-      });
+    } catch (error: unknown) {
+      console.error("Failed to delete discount:", error);
+      toast.error(
+        "Could not delete discount: " +
+          (error instanceof Error ? error.message : "An unexpected error occurred"),
+      );
     } finally {
       setDeleteDialogOpen(false);
       setDiscountToDelete(null);
@@ -138,21 +134,16 @@ const DiscountTable: React.FC<DiscountTableProps> = ({
 
       if (!response.ok) throw new Error("Failed to update");
 
-      toast({
-        description: "Discount updated successfully",
-        action: (
-          <ToastAction altText="Undo changes" onClick={() => fetchDiscounts()}>
-            Undo
-          </ToastAction>
-        ),
+      toast.success("Discount updated successfully", {
+        action: {
+          label: "Undo",
+          onClick: () => fetchDiscounts(),
+        },
       });
       fetchDiscounts();
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Could not update discount.",
-      });
+      console.error("Failed to update discount:", error);
+      toast.error("Could not update discount.");
     } finally {
       setEditingDiscount(null);
     }
@@ -306,24 +297,15 @@ const DiscountTable: React.FC<DiscountTableProps> = ({
 
                 if (!response.ok) throw new Error("Failed to create");
 
-                toast({
-                  description: "Discount created successfully",
-                  action: (
-                    <ToastAction
-                      altText="Undo create"
-                      onClick={() => fetchDiscounts()}
-                    >
-                      Undo
-                    </ToastAction>
-                  ),
+                toast.success("Discount created successfully", {
+                  action: {
+                    label: "Undo",
+                    onClick: () => fetchDiscounts(),
+                  },
                 });
                 fetchDiscounts();
-              } catch (error) {
-                toast({
-                  variant: "destructive",
-                  title: "Error",
-                  description: "Could not create discount.",
-                });
+              } catch {
+                toast.error("Could not create discount.");
               }
             };
 

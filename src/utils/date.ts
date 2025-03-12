@@ -27,7 +27,7 @@ export function parseDate(
   try {
     const parsedDate = parse(dateStr, formatStr, new Date());
     return isValid(parsedDate) ? parsedDate : null;
-  } catch (error) {
+  } catch {
     return null;
   }
 }

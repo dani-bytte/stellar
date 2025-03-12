@@ -26,6 +26,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card } from "@/components/ui/card"; // Importe o componente Card
+import { ROUTES } from "@/lib/routes";
+import { API_ENDPOINTS } from "@/lib/constants";
 
 // Update the schema to match ProfileUser model
 const registerInfoSchema = z.object({
@@ -89,7 +91,8 @@ export default function RegisterInfoPage() {
         email: values.email,
       };
 
-      const response = await fetch("/api/home/admin/register-info", {
+      // Usar API_ENDPOINTS ao invés da rota hardcoded
+      const response = await fetch(API_ENDPOINTS.PROFILE.REGISTER, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -105,8 +108,8 @@ export default function RegisterInfoPage() {
         localStorage.setItem("hasProfile", "true");
         localStorage.setItem("userProfile", JSON.stringify(payload));
 
-        // Redirect based on role
-        router.push(storedRole === "admin" ? "/admin" : "/home");
+        // Use ROUTES para redirecionamento
+        router.push(storedRole === "admin" ? ROUTES.REDIRECT.ADMIN : ROUTES.REDIRECT.USER);
       } else {
         registerInfoForm.setError("root", { message: data.error });
       }

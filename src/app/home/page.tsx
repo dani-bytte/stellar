@@ -21,6 +21,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui";
+import { API_ENDPOINTS } from "@/lib/constants";
 
 Chart.register(
   BarController,
@@ -112,7 +113,8 @@ const HomePage: React.FC = () => {
         return;
       }
 
-      const response = await fetch("/api/home/user-dashboard", {
+      // Usar API_ENDPOINTS ao invés da rota hardcoded
+      const response = await fetch(API_ENDPOINTS.USER.DASHBOARD, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -138,7 +140,11 @@ const HomePage: React.FC = () => {
       const token = localStorage.getItem("token");
       if (!token) return;
 
-      const endpoint = `/api/home/${cardType}`;
+      // Usar endpoints dinâmicos baseados no tipo
+      const endpoint = cardType === "dueTickets" 
+        ? API_ENDPOINTS.USER.DUE_TICKETS 
+        : API_ENDPOINTS.USER.TODAY_TICKETS;
+      
       const response = await fetch(endpoint, {
         headers: {
           Authorization: `Bearer ${token}`,

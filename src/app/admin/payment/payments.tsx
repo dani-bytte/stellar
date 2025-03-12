@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
+import { authenticatedFetch } from "@/utils/authUtils";
 import {
   Table,
   TableBody,
@@ -37,6 +38,7 @@ import Image from "next/image";
 import { Eye, Check } from "lucide-react"; // For view icon
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { API_ENDPOINTS } from "@/lib/constants";
 
 interface Payment {
   _id: string;
@@ -72,7 +74,6 @@ const PaymentTable: React.FC<PaymentTableProps> = ({
   isLoading,
   fetchPayments,
 }) => {
-  const { toast } = useToast();
   const [selectedPayment, setSelectedPayment] = React.useState<Payment | null>(
     null,
   );
@@ -92,17 +93,16 @@ const PaymentTable: React.FC<PaymentTableProps> = ({
 
   const fetchDiscounts = async () => {
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch("/api/tickets/discounts/list", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      // Usar API_ENDPOINTS ao invés da rota hardcoded
+      const response = await authenticatedFetch(API_ENDPOINTS.TICKETS.DISCOUNTS.LIST);
+      
       if (!response.ok) throw new Error("Failed to fetch discounts");
+      
       const data: Discount[] = await response.json();
       setDiscounts(data.filter((d: Discount) => d.visivel));
     } catch (error) {
       console.error("Error:", error);
+      // A mensagem de erro de token será mostrada pelo authenticatedFetch
     }
   };
 
@@ -123,12 +123,11 @@ const PaymentTable: React.FC<PaymentTableProps> = ({
     try {
       if (!selectedPayment) return;
 
-      const token = localStorage.getItem("token");
-      const response = await fetch("/api/home/admin/payments/confirm", {
+      // Usar API_ENDPOINTS ao invés da rota hardcoded
+      const response = await authenticatedFetch(API_ENDPOINTS.ADMIN.PAYMENTS.CONFIRM, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           ticketId: selectedPayment.ticketNumber,
@@ -143,38 +142,29 @@ const PaymentTable: React.FC<PaymentTableProps> = ({
         throw new Error(errorData.message || "Failed to confirm payment");
       }
 
-      toast({
-        title: "Success",
-        description: "Payment confirmed successfully",
-      });
+      toast.success("Payment confirmed successfully");
 
       fetchPayments();
       setConfirmDialog(false);
       setSelectedPayment(null);
     } catch (error) {
       console.error("Error confirming payment:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description:
-          error instanceof Error ? error.message : "Failed to confirm payment",
-      });
+      if (!(error instanceof Error && error.message === "Token não encontrado")) {
+        toast.error(
+          error instanceof Error ? error.message : "Failed to confirm payment"
+        );
+      }
     }
   };
 
   const handleViewProof = async (proofUrl: string) => {
     try {
-      const token = localStorage.getItem("token");
       const encodedFileName = encodeURIComponent(proofUrl);
 
-      const response = await fetch(
-        `/api/tickets/proof-image/${encodedFileName}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
+      // Usar API_ENDPOINTS ao invés da rota hardcoded
+      const response = await authenticatedFetch(
+        API_ENDPOINTS.TICKETS.PROOF_IMAGE(encodedFileName),
+        { method: "GET" }
       );
 
       if (!response.ok) {
@@ -187,11 +177,9 @@ const PaymentTable: React.FC<PaymentTableProps> = ({
       setProofDialogOpen(true);
     } catch (error) {
       console.error("Error:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load proof image",
-        variant: "destructive",
-      });
+      if (!(error instanceof Error && error.message === "Token não encontrado")) {
+        toast.error("Failed to load proof image");
+      }
     }
   };
 
@@ -246,60 +234,58 @@ const PaymentTable: React.FC<PaymentTableProps> = ({
       <>
         <Table>
           <TableHeader>
-            <TableRow key="header-row">
-              <TableHead key="head-ticket">Ticket Number</TableHead>
-              <TableHead key="head-user">User</TableHead>
-              <TableHead key="head-value">Value</TableHead>
-              <TableHead key="head-discount">Discount</TableHead>
-              <TableHead key="head-commission">Commission</TableHead>
-              <TableHead key="head-actions">Actions</TableHead>
+            <TableRow>
+              <TableHead>Ticket Number</TableHead>
+              <TableHead>User</TableHead>
+              <TableHead>Value</TableHead>
+              <TableHead>Discount</TableHead>
+              <TableHead>Commission</TableHead>
+              <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredData.map((payment) => (
-              <TableRow key={payment._id}>
-                <TableCell key={`${payment._id}-ticket`}>
-                  {payment.ticketNumber}
-                </TableCell>
-                <TableCell key={`${payment._id}-user`}>
-                  {payment.userName}
-                </TableCell>
-                <TableCell key={`${payment._id}-value`}>
-                  {payment.finalValue
-                    ? `R$ ${payment.finalValue.toFixed(2)}`
-                    : "N/A"}
-                </TableCell>
-                <TableCell key={`${payment._id}-discount`}>
-                  {payment.discountApplied}
-                </TableCell>
-                <TableCell key={`${payment._id}-commission`}>
-                  {payment.repasse}
-                </TableCell>
-                <TableCell key={`${payment._id}-actions`}>
-                  <div className="flex gap-2">
-                    <Button
-                      key={`${payment._id}-confirm-btn`}
-                      onClick={() => {
-                        setSelectedPayment(payment);
-                        setConfirmDialog(true);
-                      }}
-                    >
-                      Confirm
-                    </Button>
-                    {payment.proofUrl && (
-                      <Button
-                        key={`${payment._id}-proof-btn`}
-                        variant="outline"
-                        size="icon"
-                        onClick={() => handleViewProof(payment.proofUrl)}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
+            {filteredData.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-8">
+                  No payments found
                 </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              filteredData.map((payment) => (
+                <TableRow key={payment._id}>
+                  <TableCell>{payment.ticketNumber}</TableCell>
+                  <TableCell>{payment.userName}</TableCell>
+                  <TableCell>
+                    {payment.finalValue
+                      ? `R$ ${payment.finalValue.toFixed(2)}`
+                      : "N/A"}
+                  </TableCell>
+                  <TableCell>{payment.discountApplied}</TableCell>
+                  <TableCell>{payment.repasse}</TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => {
+                          setSelectedPayment(payment);
+                          setConfirmDialog(true);
+                        }}
+                      >
+                        Confirm
+                      </Button>
+                      {payment.proofUrl && (
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => handleViewProof(payment.proofUrl)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </>
@@ -423,11 +409,7 @@ const PaymentTable: React.FC<PaymentTableProps> = ({
                 height={600}
                 className="object-contain w-full h-auto max-h-144"
                 onError={() => {
-                  toast({
-                    title: "Error",
-                    description: "Failed to load image",
-                    variant: "destructive",
-                  });
+                  toast.error("Failed to load image");
                   setProofDialogOpen(false);
                 }}
               />

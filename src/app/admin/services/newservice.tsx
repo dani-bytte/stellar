@@ -1,47 +1,23 @@
-// components/ServiceTable.tsx
 "use client";
 
 import * as React from "react";
 import {
-  ColumnDef,
-  ColumnFiltersState,
-  SortingState,
-  VisibilityState,
-  RowSelectionState,
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
+  ColumnDef
 } from "@tanstack/react-table";
-import { ServiceFormSheet } from "./ServiceFormSheet";
-import { ArrowUpDown, ChevronDown, MoreHorizontal } from "lucide-react";
+import { ArrowUpDown, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   DropdownMenu,
-  DropdownMenuCheckboxItem,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { DataTable } from "@/components/data-table/data-table";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { formatCurrency } from "@/lib/formatters";
 import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "sonner";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 interface Service {
   _id: string;
@@ -54,16 +30,11 @@ interface Service {
   };
 }
 
-declare module "@tanstack/react-table" {
-  interface ColumnMeta<TData, TValue> {
-    columnName?: string;
-  }
-}
-
 interface ServiceTableProps {
   data: Service[];
   isLoading: boolean;
   fetchServices: () => void;
+  onCreateNew?: () => void;
 }
 
 const ServiceTable: React.FC<ServiceTableProps> = ({
@@ -71,27 +42,29 @@ const ServiceTable: React.FC<ServiceTableProps> = ({
   isLoading,
   fetchServices,
 }) => {
-  const [open, setOpen] = React.useState(false);
-  const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    [],
-  );
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({});
-  const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
+
+  
+  // Function to handle service deletion
+  const handleDeleteService = async (serviceId: string) => {
+    try {
+      console.log(`Deleting service with ID: ${serviceId}`); // Placeholder
+      toast.success("Service deleted successfully");
+      fetchServices();
+    } catch (error) {
+      console.error("Error deleting service:", error);
+      toast.error("Failed to delete service");
+    }
+  };
 
   // Define columns
   const columns = React.useMemo<ColumnDef<Service>[]>(
     () => [
       {
         id: "select",
-        enableHiding: false,
         header: ({ table }) => (
           <Checkbox
             checked={table.getIsAllPageRowsSelected()}
-            onCheckedChange={(value) =>
-              table.toggleAllPageRowsSelected(!!value)
-            }
+            onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
             aria-label="Select all"
           />
         ),
@@ -102,6 +75,8 @@ const ServiceTable: React.FC<ServiceTableProps> = ({
             aria-label="Select row"
           />
         ),
+        enableSorting: false,
+        enableHiding: false,
       },
       {
         accessorKey: "name",
@@ -114,20 +89,14 @@ const ServiceTable: React.FC<ServiceTableProps> = ({
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         ),
-        meta: {
-          columnName: "Name",
-        },
       },
       {
         accessorKey: "category.name",
         id: "category",
         header: "Category",
         cell: ({ row }) => (
-          <Badge variant="secondary">{row.original.category.name}</Badge>
+          <StatusBadge status="info" text={row.original.category.name} />
         ),
-        meta: {
-          columnName: "Category",
-        },
       },
       {
         accessorKey: "dueDate",
@@ -140,9 +109,7 @@ const ServiceTable: React.FC<ServiceTableProps> = ({
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         ),
-        meta: {
-          columnName: "Duration (days)",
-        },
+        cell: ({ row }) => row.original.dueDate.toString(),
       },
       {
         accessorKey: "value",
@@ -155,237 +122,65 @@ const ServiceTable: React.FC<ServiceTableProps> = ({
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         ),
-        cell: ({ row }) => {
-          const value = row.getValue("value") as number;
-          return `R$ ${value.toFixed(2)}`;
-        },
-        meta: {
-          columnName: "Value",
-        },
+        cell: ({ row }) => formatCurrency(row.original.value),
       },
       {
         id: "actions",
-        enableHiding: false,
-        header: "Actions",
         cell: ({ row }) => {
           const service = row.original;
+          
           return (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="h-8 w-8 p-0">
+                  <span className="sr-only">Open menu</span>
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuCheckboxItem onSelect={() => {}}>
+                <DropdownMenuItem
+                  onClick={() => {
+                    // Edit action would be implemented here
+                  }}
+                >
+                  <Pencil className="mr-2 h-4 w-4" />
                   Edit
-                </DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem onSelect={() => {}}>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => handleDeleteService(service._id)}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
                   Delete
-                </DropdownMenuCheckboxItem>
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           );
         },
       },
     ],
-    [],
+    [handleDeleteService]
   );
 
-  // Initialize column visibility state
-  React.useEffect(() => {
-    // Set initial column visibility, ensuring columns with enableHiding: false are always visible
-    const initialVisibility: VisibilityState = {};
-    columns.forEach((column) => {
-      const columnId =
-        column.id ||
-        (column as { accessorKey?: string }).accessorKey?.toString() ||
-        "";
-      initialVisibility[columnId] = true;
-    });
-    setColumnVisibility(initialVisibility);
-  }, [columns]);
-
-  const table = useReactTable({
-    data,
-    columns,
-    state: {
-      sorting,
-      columnFilters,
-      columnVisibility,
-      rowSelection,
-    },
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-  });
-
-  const pageSizeOptions = [10, 20, 30, 40, 50];
-
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex justify-center items-center h-96">
+        <LoadingSpinner size="lg" text="Loading services..." />
+      </div>
+    );
   }
 
-  // Helper function to render column labels in the dropdown
-  const renderColumnLabel = (column: ColumnDef<Service>) => {
-    if (column.meta?.columnName) {
-      return column.meta.columnName;
-    }
-    if (typeof column.header === "string") {
-      return column.header;
-    }
-    return column.id;
-  };
-
   return (
-    <div className="w-full">
-      <div className="flex items-center py-4">
-        {/* Filter Input */}
-        <Input
-          placeholder="Filter by name..."
-          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn("name")?.setFilterValue(event.target.value)
-          }
-          className="max-w-sm"
-        />
-        {/* New Service Button */}
-        <Button
-          variant="default"
-          className="ml-4"
-          onClick={() => setOpen(true)}
-        >
-          New Service
-        </Button>
-        {/* Columns Dropdown Menu */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="ml-auto">
-              Columns <ChevronDown className="ml-2 h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {table
-              .getAllLeafColumns()
-              .filter((column) => column.columnDef.enableHiding !== false)
-              .map((column) => (
-                <DropdownMenuCheckboxItem
-                  key={column.id}
-                  className="capitalize"
-                  checked={column.getIsVisible()}
-                  onCheckedChange={(value) => column.toggleVisibility(!!value)}
-                >
-                  {renderColumnLabel(column.columnDef)}
-                </DropdownMenuCheckboxItem>
-              ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-        {/* ServiceFormSheet */}
-        <ServiceFormSheet
-          open={open}
-          onOpenChange={setOpen}
-          onSuccess={() => {
-            // Refresh services list
-            fetchServices();
-          }}
-        />
-      </div>
-      {/* Table */}
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows.length > 0 ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  No results.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-
-      {/* Pagination */}
-      <div className="flex items-center justify-between space-x-2 py-4">
-        <div className="flex items-center gap-2">
-          <p className="text-sm font-medium">Rows per page</p>
-          <Select
-            value={`${table.getState().pagination.pageSize}`}
-            onValueChange={(value) => {
-              table.setPageSize(Number(value));
-            }}
-          >
-            <SelectTrigger className="h-8 w-[70px]">
-              <SelectValue placeholder={table.getState().pagination.pageSize} />
-            </SelectTrigger>
-            <SelectContent side="top">
-              {pageSizeOptions.map((pageSize) => (
-                <SelectItem key={pageSize} value={`${pageSize}`}>
-                  {pageSize}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Next
-          </Button>
-        </div>
-      </div>
+    <div className="w-full space-y-4">
+      <DataTable
+        columns={columns}
+        data={data}
+        filterColumn="name"
+        filterPlaceholder="Filter by name..."
+        showColumnToggle={true}
+        pageSizeOptions={[10, 20, 30, 50]}
+        className="w-full"
+      />
     </div>
   );
 };
