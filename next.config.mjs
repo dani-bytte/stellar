@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Movido de experimental.serverComponentsExternalPackages para a raiz
-  serverExternalPackages: ['http-proxy'],
+  serverExternalPackages: ["http-proxy"],
 
   experimental: {
     // Outros configs experimentais podem permanecer
@@ -11,8 +11,8 @@ const nextConfig = {
   async redirects() {
     return [
       {
-        source: '/',
-        destination: '/auth/login',
+        source: "/",
+        destination: "/auth/login",
         permanent: true,
       },
     ];
@@ -22,8 +22,8 @@ const nextConfig = {
   async rewrites() {
     return [
       {
-        source: '/api/:path*',
-        destination: 'http://localhost:3001/:path*',
+        source: "/api/:path*",
+        destination: "http://localhost:3001/:path*",
       },
     ];
   },
@@ -32,16 +32,16 @@ const nextConfig = {
   async headers() {
     return [
       {
-        source: '/:path*',
+        source: "/:path*",
         headers: [
-          { key: 'X-DNS-Prefetch-Control', value: 'on' },
+          { key: "X-DNS-Prefetch-Control", value: "on" },
           {
-            key: 'Strict-Transport-Security',
-            value: 'max-age=31536000; includeSubDomains',
+            key: "Strict-Transport-Security",
+            value: "max-age=31536000; includeSubDomains",
           },
-          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
-          { key: 'X-Content-Type-Options', value: 'nosniff' },
-          { key: 'Referrer-Policy', value: 'origin-when-cross-origin' },
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "origin-when-cross-origin" },
         ],
       },
     ];
@@ -58,8 +58,8 @@ const nextConfig = {
 
   // Otimizar geração de imagens
   images: {
-    domains: ['minios3.muonityzone.top'],
-    formats: ['image/avif', 'image/webp'],
+    domains: ["minios3.muonityzone.top"],
+    formats: ["image/avif", "image/webp"],
     minimumCacheTTL: 60,
   },
 

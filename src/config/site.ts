@@ -1,27 +1,27 @@
 export const siteConfig = {
-  name: 'Stellar',
-  description: 'Descrição do seu projeto',
+  name: "Stellar",
+  description: "Descrição do seu projeto",
   mainNav: [
     {
-      title: 'Início',
-      href: '/',
+      title: "Início",
+      href: "/",
     },
     {
-      title: 'Dashboard',
-      href: '/dashboard',
+      title: "Dashboard",
+      href: "/dashboard",
     },
     {
-      title: 'Relatórios',
-      href: '/relatorios',
+      title: "Relatórios",
+      href: "/relatorios",
     },
     {
-      title: 'Configurações',
-      href: '/configuracoes',
+      title: "Configurações",
+      href: "/configuracoes",
     },
   ],
   links: {
-    github: 'https://github.com/seu-usuario/stellar',
-    docs: '/docs',
-    support: 'mailto:suporte@exemplo.com',
+    github: "https://github.com/seu-usuario/stellar",
+    docs: "/docs",
+    support: "mailto:suporte@exemplo.com",
   },
 };

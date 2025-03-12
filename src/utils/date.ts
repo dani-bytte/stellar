@@ -1,18 +1,18 @@
-import { format, parse, isValid, differenceInDays } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { format, parse, isValid, differenceInDays } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 /**
  * Formata uma data para o formato desejado
  */
 export function formatDateString(
   date: Date | string | number,
-  formatStr = 'dd/MM/yyyy'
+  formatStr = "dd/MM/yyyy",
 ): string {
-  if (!date) return '';
+  if (!date) return "";
 
-  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  const dateObj = typeof date === "string" ? new Date(date) : date;
 
-  if (!isValid(dateObj)) return 'Data inválida';
+  if (!isValid(dateObj)) return "Data inválida";
 
   return format(dateObj, formatStr, { locale: ptBR });
 }
@@ -22,7 +22,7 @@ export function formatDateString(
  */
 export function parseDate(
   dateStr: string,
-  formatStr = 'dd/MM/yyyy'
+  formatStr = "dd/MM/yyyy",
 ): Date | null {
   try {
     const parsedDate = parse(dateStr, formatStr, new Date());

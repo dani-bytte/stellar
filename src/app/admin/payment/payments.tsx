@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import * as React from 'react';
-import { useToast } from '@/hooks/use-toast';
+import * as React from "react";
+import { useToast } from "@/hooks/use-toast";
 import {
   Table,
   TableBody,
@@ -9,8 +9,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -18,25 +18,25 @@ import {
   DialogTitle,
   DialogFooter,
   DialogDescription,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   Pagination,
   PaginationContent,
   PaginationItem,
   PaginationNext,
   PaginationPrevious,
-} from '@/components/ui/pagination';
-import Image from 'next/image';
-import { Eye, Check } from 'lucide-react'; // For view icon
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+} from "@/components/ui/pagination";
+import Image from "next/image";
+import { Eye, Check } from "lucide-react"; // For view icon
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface Payment {
   _id: string;
@@ -74,35 +74,35 @@ const PaymentTable: React.FC<PaymentTableProps> = ({
 }) => {
   const { toast } = useToast();
   const [selectedPayment, setSelectedPayment] = React.useState<Payment | null>(
-    null
+    null,
   );
   const [confirmDialog, setConfirmDialog] = React.useState(false);
   const [selectedDiscount, setSelectedDiscount] =
-    React.useState<string>('no-discount');
+    React.useState<string>("no-discount");
   const [discounts, setDiscounts] = React.useState<Discount[]>([]);
   const [pageSize, setPageSize] = React.useState(10);
   const [currentPage, setCurrentPage] = React.useState(1);
-  const [userFilter, setUserFilter] = React.useState('all');
+  const [userFilter, setUserFilter] = React.useState("all");
   const [totalValue, setTotalValue] = React.useState(0);
   const [proofDialogOpen, setProofDialogOpen] = React.useState(false);
   const [selectedProofUrl, setSelectedProofUrl] = React.useState<string | null>(
-    null
+    null,
   );
   const [calculatedValue, setCalculatedValue] = React.useState<number>(0);
 
   const fetchDiscounts = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/tickets/discounts/list', {
+      const token = localStorage.getItem("token");
+      const response = await fetch("/api/tickets/discounts/list", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      if (!response.ok) throw new Error('Failed to fetch discounts');
+      if (!response.ok) throw new Error("Failed to fetch discounts");
       const data: Discount[] = await response.json();
       setDiscounts(data.filter((d: Discount) => d.visivel));
     } catch (error) {
-      console.error('Error:', error);
+      console.error("Error:", error);
     }
   };
 
@@ -111,7 +111,7 @@ const PaymentTable: React.FC<PaymentTableProps> = ({
   }, []);
 
   const calculateFinalValue = (value: number, discountId?: string) => {
-    if (!discountId || discountId === 'no-discount') return value;
+    if (!discountId || discountId === "no-discount") return value;
 
     const discount = discounts.find((d) => d._id === discountId);
     if (!discount) return value;
@@ -123,62 +123,62 @@ const PaymentTable: React.FC<PaymentTableProps> = ({
     try {
       if (!selectedPayment) return;
 
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/home/admin/payments/confirm', {
-        method: 'POST',
+      const token = localStorage.getItem("token");
+      const response = await fetch("/api/home/admin/payments/confirm", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           ticketId: selectedPayment.ticketNumber,
           finalValue: calculatedValue || selectedPayment.finalValue,
           newDiscountId:
-            selectedDiscount !== 'no-discount' ? selectedDiscount : undefined,
+            selectedDiscount !== "no-discount" ? selectedDiscount : undefined,
         } as ConfirmPaymentData),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to confirm payment');
+        throw new Error(errorData.message || "Failed to confirm payment");
       }
 
       toast({
-        title: 'Success',
-        description: 'Payment confirmed successfully',
+        title: "Success",
+        description: "Payment confirmed successfully",
       });
 
       fetchPayments();
       setConfirmDialog(false);
       setSelectedPayment(null);
     } catch (error) {
-      console.error('Error confirming payment:', error);
+      console.error("Error confirming payment:", error);
       toast({
-        variant: 'destructive',
-        title: 'Error',
+        variant: "destructive",
+        title: "Error",
         description:
-          error instanceof Error ? error.message : 'Failed to confirm payment',
+          error instanceof Error ? error.message : "Failed to confirm payment",
       });
     }
   };
 
   const handleViewProof = async (proofUrl: string) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       const encodedFileName = encodeURIComponent(proofUrl);
 
       const response = await fetch(
         `/api/tickets/proof-image/${encodedFileName}`,
         {
-          method: 'GET',
+          method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       if (!response.ok) {
-        throw new Error('Failed to load proof image');
+        throw new Error("Failed to load proof image");
       }
 
       const blob = await response.blob();
@@ -186,24 +186,24 @@ const PaymentTable: React.FC<PaymentTableProps> = ({
       setSelectedProofUrl(imageUrl);
       setProofDialogOpen(true);
     } catch (error) {
-      console.error('Error:', error);
+      console.error("Error:", error);
       toast({
-        title: 'Error',
-        description: 'Failed to load proof image',
-        variant: 'destructive',
+        title: "Error",
+        description: "Failed to load proof image",
+        variant: "destructive",
       });
     }
   };
 
   // Get unique users for filter
   const uniqueUsers = React.useMemo(() => {
-    return ['all', ...Array.from(new Set(data.map((p) => p.userName)))];
+    return ["all", ...Array.from(new Set(data.map((p) => p.userName)))];
   }, [data]);
 
   // Filter and paginate data
   const filteredData = React.useMemo(() => {
     let filtered = data;
-    if (userFilter !== 'all') {
+    if (userFilter !== "all") {
       filtered = data.filter((p) => p.userName === userFilter);
     }
 
@@ -267,7 +267,7 @@ const PaymentTable: React.FC<PaymentTableProps> = ({
                 <TableCell key={`${payment._id}-value`}>
                   {payment.finalValue
                     ? `R$ ${payment.finalValue.toFixed(2)}`
-                    : 'N/A'}
+                    : "N/A"}
                 </TableCell>
                 <TableCell key={`${payment._id}-discount`}>
                   {payment.discountApplied}
@@ -367,7 +367,7 @@ const PaymentTable: React.FC<PaymentTableProps> = ({
                   setSelectedDiscount(value);
                   if (selectedPayment) {
                     setCalculatedValue(
-                      calculateFinalValue(selectedPayment.finalValue, value)
+                      calculateFinalValue(selectedPayment.finalValue, value),
                     );
                   }
                 }}
@@ -424,9 +424,9 @@ const PaymentTable: React.FC<PaymentTableProps> = ({
                 className="object-contain w-full h-auto max-h-144"
                 onError={() => {
                   toast({
-                    title: 'Error',
-                    description: 'Failed to load image',
-                    variant: 'destructive',
+                    title: "Error",
+                    description: "Failed to load image",
+                    variant: "destructive",
                   });
                   setProofDialogOpen(false);
                 }}

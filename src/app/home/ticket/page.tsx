@@ -1,5 +1,5 @@
-import React from 'react';
-import { TicketTable } from './TicketTab';
+import React from "react";
+import { TicketTable } from "./TicketTab";
 
 const UsersPage: React.FC = () => {
   return (

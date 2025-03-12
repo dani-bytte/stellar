@@ -1,7 +1,7 @@
 // app/tickets/page.tsx
-'use client';
+"use client";
 
-import * as React from 'react';
+import * as React from "react";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -12,11 +12,11 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
-} from '@tanstack/react-table';
-import { flexRender } from '@tanstack/react-table';
-import { ArrowUpDown, MoreHorizontal, ChevronDown } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+} from "@tanstack/react-table";
+import { flexRender } from "@tanstack/react-table";
+import { ArrowUpDown, MoreHorizontal, ChevronDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -24,7 +24,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,8 +33,8 @@ import {
   DropdownMenuTrigger,
   DropdownMenuCheckboxItem,
   DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu';
-import { useToast } from '@/hooks/use-toast';
+} from "@/components/ui/dropdown-menu";
+import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
   DialogContent,
@@ -43,11 +43,11 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 
-import Image from 'next/image';
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { Label } from '@/components/ui';
+import Image from "next/image";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { Label } from "@/components/ui";
 import {
   Select,
   SelectTrigger,
@@ -56,8 +56,8 @@ import {
   SelectValue,
   SelectGroup,
   SelectLabel,
-} from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -67,14 +67,14 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from "@/components/ui/alert-dialog";
 
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import * as z from 'zod';
-import { Form, FormControl, FormField, FormLabel } from '@/components/ui/form';
-import { Slider } from '@/components/ui/slider';
-import { Textarea } from '@/components/ui/textarea';
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { Form, FormControl, FormField, FormLabel } from "@/components/ui/form";
+import { Slider } from "@/components/ui/slider";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Sheet,
   SheetContent,
@@ -82,7 +82,7 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-} from '@/components/ui/sheet';
+} from "@/components/ui/sheet";
 
 // Ticket type definition
 type Ticket = {
@@ -100,8 +100,8 @@ type Ticket = {
   email: string;
   startDate: string;
   endDate: string;
-  status: 'andamento' | 'finalizado';
-  payment: 'pendente' | 'completo';
+  status: "andamento" | "finalizado";
+  payment: "pendente" | "completo";
   proofUrl: string | null;
   createdBy: {
     _id: string;
@@ -146,7 +146,7 @@ type TransferRequest = {
 // Update transfer schema - remove transferToId
 const transferSchema = z.object({
   progressPercentage: z.number().min(0).max(100),
-  clientInfo: z.string().min(1, 'Required'),
+  clientInfo: z.string().min(1, "Required"),
 });
 
 // Add new type for Discount
@@ -164,7 +164,7 @@ export function TicketTable() {
   const [loading, setLoading] = useState<boolean>(true);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
+    [],
   );
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
     service_name: false,
@@ -176,12 +176,12 @@ export function TicketTable() {
   const [proofUrl, setProofUrl] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newTicket, setNewTicket] = useState<NewTicket>({
-    ticket: '',
-    serviceId: '',
-    client: '',
-    email: '',
-    startDate: '',
-    endDate: '',
+    ticket: "",
+    serviceId: "",
+    client: "",
+    email: "",
+    startDate: "",
+    endDate: "",
     discountId: undefined,
     proof: undefined,
   });
@@ -198,25 +198,25 @@ export function TicketTable() {
   const fetchTickets = useCallback(async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
-      if (!token) throw new Error('No token found');
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("No token found");
 
-      const response = await fetch('/api/tickets/list', {
+      const response = await fetch("/api/tickets/list", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
-      if (!response.ok) throw new Error('Failed to fetch tickets');
+      if (!response.ok) throw new Error("Failed to fetch tickets");
 
       const result = await response.json();
       setData(result);
     } catch (error) {
-      console.error('Error fetching tickets:', error);
+      console.error("Error fetching tickets:", error);
       toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to load tickets',
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load tickets",
       });
     } finally {
       setLoading(false);
@@ -225,10 +225,10 @@ export function TicketTable() {
 
   const fetchServices = useCallback(async () => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) throw new Error('Token não encontrado');
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("Token não encontrado");
 
-      const response = await fetch('/api/tickets/services/list', {
+      const response = await fetch("/api/tickets/services/list", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -236,26 +236,26 @@ export function TicketTable() {
 
       if (response.status === 401) {
         // Token expirado, redirecione para login ou trate conforme necessário
-        console.error('Token expirado');
+        console.error("Token expirado");
         // Por exemplo, você pode limpar o token e redirecionar:
-        localStorage.removeItem('token');
-        window.location.href = '/login';
+        localStorage.removeItem("token");
+        window.location.href = "/login";
         return;
       }
 
       if (!response.ok) {
-        throw new Error('Falha ao buscar serviços');
+        throw new Error("Falha ao buscar serviços");
       }
 
       const servicesData = await response.json();
       setServices(servicesData);
     } catch (error) {
-      console.error('Erro ao buscar serviços:', error);
+      console.error("Erro ao buscar serviços:", error);
       setServices([]); // Garante que services seja um array
       toast({
-        title: 'Erro',
-        description: 'Falha ao carregar serviços',
-        variant: 'destructive',
+        title: "Erro",
+        description: "Falha ao carregar serviços",
+        variant: "destructive",
       });
     }
   }, [toast]);
@@ -263,21 +263,21 @@ export function TicketTable() {
   // Add fetchDiscounts function
   const fetchDiscounts = useCallback(async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/tickets/discounts/list', {
+      const token = localStorage.getItem("token");
+      const response = await fetch("/api/tickets/discounts/list", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      if (!response.ok) throw new Error('Failed to fetch discounts');
+      if (!response.ok) throw new Error("Failed to fetch discounts");
       const discountData = await response.json();
       setDiscounts(discountData.filter((d: Discount) => d.visivel));
     } catch (error) {
-      console.error('Error fetching discounts:', error);
+      console.error("Error fetching discounts:", error);
       toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to load discounts',
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load discounts",
       });
     }
   }, [toast]);
@@ -286,9 +286,9 @@ export function TicketTable() {
   useEffect(() => {
     Promise.all([fetchServices(), fetchDiscounts(), fetchTickets()]).catch(
       (error) => {
-        console.error('Error loading data:', error);
+        console.error("Error loading data:", error);
         setLoading(false);
-      }
+      },
     );
   }, [fetchServices, fetchDiscounts, fetchTickets]);
 
@@ -297,26 +297,26 @@ export function TicketTable() {
   const handleCreateTicket = async () => {
     setIsSubmitting(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       const formData = new FormData();
 
-      formData.append('ticket', newTicket.ticket);
-      formData.append('serviceId', newTicket.serviceId);
-      formData.append('client', newTicket.client);
-      formData.append('email', newTicket.email);
-      formData.append('startDate', newTicket.startDate);
+      formData.append("ticket", newTicket.ticket);
+      formData.append("serviceId", newTicket.serviceId);
+      formData.append("client", newTicket.client);
+      formData.append("email", newTicket.email);
+      formData.append("startDate", newTicket.startDate);
 
       if (newTicket.discountId) {
-        formData.append('discountId', newTicket.discountId);
+        formData.append("discountId", newTicket.discountId);
       }
 
       if (newTicket.proof) {
-        formData.append('proof', newTicket.proof);
+        formData.append("proof", newTicket.proof);
       }
 
       // Submit the form data to the API
-      const response = await fetch('/api/tickets/new', {
-        method: 'POST',
+      const response = await fetch("/api/tickets/new", {
+        method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -324,32 +324,32 @@ export function TicketTable() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create ticket');
+        throw new Error("Failed to create ticket");
       }
 
       // Handle success
       await fetchTickets();
       setNewTicket({
-        ticket: '',
-        serviceId: '',
-        client: '',
-        email: '',
-        startDate: '',
-        endDate: '',
+        ticket: "",
+        serviceId: "",
+        client: "",
+        email: "",
+        startDate: "",
+        endDate: "",
         discountId: undefined,
         proof: undefined,
       });
       toast({
-        title: 'Success',
-        description: 'Ticket created successfully',
+        title: "Success",
+        description: "Ticket created successfully",
       });
       setIsDialogOpen(false);
     } catch (error) {
-      console.error('Error creating ticket:', error);
+      console.error("Error creating ticket:", error);
       toast({
-        title: 'Error',
-        description: 'An unexpected error occurred',
-        variant: 'destructive',
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
@@ -369,7 +369,7 @@ export function TicketTable() {
       const startDate = new Date(startDateStr);
       const endDate = new Date(startDate);
       endDate.setDate(endDate.getDate() + selectedService.dueDate);
-      endDateStr = endDate.toISOString().split('T')[0];
+      endDateStr = endDate.toISOString().split("T")[0];
     }
 
     setNewTicket({
@@ -381,33 +381,33 @@ export function TicketTable() {
 
   const handleHideTicket = async (ticketId: string) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       const response = await fetch(`/api/tickets/${ticketId}/hide`, {
-        method: 'PUT',
+        method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       });
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || 'Failed to hide ticket');
+        throw new Error(error.message || "Failed to hide ticket");
       }
 
       toast({
-        title: 'Success',
-        description: 'Ticket hidden successfully',
+        title: "Success",
+        description: "Ticket hidden successfully",
       });
 
       // Refresh tickets list
       await fetchTickets();
     } catch (error) {
       toast({
-        title: 'Error',
+        title: "Error",
         description:
-          error instanceof Error ? error.message : 'Failed to hide ticket',
-        variant: 'destructive',
+          error instanceof Error ? error.message : "Failed to hide ticket",
+        variant: "destructive",
       });
     } finally {
       setTicketToDelete(null);
@@ -430,14 +430,14 @@ export function TicketTable() {
       resolver: zodResolver(transferSchema),
       defaultValues: {
         progressPercentage: 0,
-        clientInfo: '',
+        clientInfo: "",
       },
     });
 
-    const onSubmit = async (values: Omit<TransferRequest, 'ticketId'>) => {
+    const onSubmit = async (values: Omit<TransferRequest, "ticketId">) => {
       try {
         setLoading(true);
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem("token");
 
         const requestData = {
           ticketId,
@@ -445,39 +445,39 @@ export function TicketTable() {
           clientInfo: values.clientInfo,
         };
 
-        console.log('Submitting transfer request:', requestData);
+        console.log("Submitting transfer request:", requestData);
 
-        const response = await fetch('/api/tickets/transfer/request', {
-          method: 'POST',
+        const response = await fetch("/api/tickets/transfer/request", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(requestData),
         });
 
         const data = await response.json();
-        console.log('API Response:', data);
+        console.log("API Response:", data);
 
         if (!response.ok)
-          throw new Error(data.error || 'Failed to submit transfer request');
+          throw new Error(data.error || "Failed to submit transfer request");
 
         toast({
-          title: 'Success',
-          description: 'Transfer request submitted successfully',
+          title: "Success",
+          description: "Transfer request submitted successfully",
         });
 
         form.reset();
         onOpenChange(false);
       } catch (error) {
-        console.error('Transfer request error:', error);
+        console.error("Transfer request error:", error);
         toast({
-          title: 'Error',
+          title: "Error",
           description:
             error instanceof Error
               ? error.message
-              : 'Failed to submit transfer request',
-          variant: 'destructive',
+              : "Failed to submit transfer request",
+          variant: "destructive",
         });
       } finally {
         setLoading(false);
@@ -548,7 +548,7 @@ export function TicketTable() {
                   onClick={form.handleSubmit(onSubmit)}
                   className="w-full"
                 >
-                  {loading ? 'Submitting...' : 'Submit Request'}
+                  {loading ? "Submitting..." : "Submit Request"}
                 </Button>
               </SheetFooter>
             </form>
@@ -561,12 +561,12 @@ export function TicketTable() {
   // Update your column definitions for consistency
   const columns: ColumnDef<Ticket>[] = [
     {
-      id: 'select',
+      id: "select",
       header: ({ table }) => (
         <Checkbox
           checked={
             table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && 'indeterminate')
+            (table.getIsSomePageRowsSelected() && "indeterminate")
           }
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
           aria-label="Select all"
@@ -583,12 +583,12 @@ export function TicketTable() {
       enableHiding: false,
     },
     {
-      accessorKey: 'ticket',
+      accessorKey: "ticket",
       header: ({ column }) => {
         return (
           <Button
             variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
             Ticket
             <ArrowUpDown />
@@ -597,12 +597,12 @@ export function TicketTable() {
       },
     },
     {
-      accessorKey: 'client',
-      header: 'Client',
+      accessorKey: "client",
+      header: "Client",
     },
     {
-      accessorKey: 'service',
-      header: 'Service',
+      accessorKey: "service",
+      header: "Service",
       cell: ({ row }) => {
         const service = row.original.service;
         return (
@@ -616,12 +616,12 @@ export function TicketTable() {
       },
     },
     {
-      accessorKey: 'createdBy',
+      accessorKey: "createdBy",
       header: ({ column }) => {
         return (
           <Button
             variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
             Created
             <ArrowUpDown />
@@ -631,26 +631,26 @@ export function TicketTable() {
       cell: ({ row }) => {
         // Acessa `createdBy.username` do objeto aninhado
         const createdBy = row.original.createdBy;
-        return createdBy ? createdBy.username : 'Unknown';
+        return createdBy ? createdBy.username : "Unknown";
       },
     },
     {
-      accessorKey: 'startDate',
-      header: 'Start Date',
+      accessorKey: "startDate",
+      header: "Start Date",
       cell: ({ row }) => {
         const startDate = row.original.startDate;
         return startDate
           ? new Date(startDate).toLocaleDateString() // Formata a data
-          : 'No Start Date';
+          : "No Start Date";
       },
     },
     {
-      accessorKey: 'endDate',
+      accessorKey: "endDate",
       header: ({ column }) => {
         return (
           <Button
             variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
             End Date
             <ArrowUpDown />
@@ -661,20 +661,20 @@ export function TicketTable() {
         const endDate = row.original.endDate;
         return endDate
           ? new Date(endDate).toLocaleDateString() // Formata a data
-          : 'No End Date';
+          : "No End Date";
       },
     },
     {
-      accessorKey: 'status',
-      header: 'Status',
+      accessorKey: "status",
+      header: "Status",
       cell: ({ row }) => {
         const status = row.original.status;
         return (
           <span
             className={`px-2 py-1 rounded-full ${
-              status === 'finalizado'
-                ? 'bg-green-100 text-green-800'
-                : 'bg-yellow-100 text-yellow-800'
+              status === "finalizado"
+                ? "bg-green-100 text-green-800"
+                : "bg-yellow-100 text-yellow-800"
             }`}
           >
             {status}
@@ -683,16 +683,16 @@ export function TicketTable() {
       },
     },
     {
-      accessorKey: 'payment',
-      header: 'Payment',
+      accessorKey: "payment",
+      header: "Payment",
       cell: ({ row }) => {
         const payment = row.original.payment;
         return (
           <span
             className={`px-2 py-1 rounded-full ${
-              payment === 'completo'
-                ? 'bg-green-100 text-green-800'
-                : 'bg-red-100 text-red-800'
+              payment === "completo"
+                ? "bg-green-100 text-green-800"
+                : "bg-red-100 text-red-800"
             }`}
           >
             {payment}
@@ -701,7 +701,7 @@ export function TicketTable() {
       },
     },
     {
-      id: 'actions',
+      id: "actions",
       cell: ({ row }) => {
         const ticket = row.original;
 
@@ -709,22 +709,22 @@ export function TicketTable() {
           if (!ticket.proofUrl) return;
 
           try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem("token");
             const encodedFileName = encodeURIComponent(ticket.proofUrl);
 
             // Faça uma requisição para o endpoint que retorna a imagem
             const response = await fetch(
               `/api/tickets/proof-image/${encodedFileName}`,
               {
-                method: 'GET',
+                method: "GET",
                 headers: {
                   Authorization: `Bearer ${token}`,
                 },
-              }
+              },
             );
 
             if (!response.ok) {
-              throw new Error('Erro ao carregar a imagem');
+              throw new Error("Erro ao carregar a imagem");
             }
 
             // Crie um blob da imagem
@@ -735,11 +735,11 @@ export function TicketTable() {
             setProofUrl(imageUrl);
             setDialogOpen(true);
           } catch (error) {
-            console.error('Erro:', error);
+            console.error("Erro:", error);
             toast({
-              title: 'Erro',
-              description: 'Falha ao abrir o comprovante',
-              variant: 'destructive',
+              title: "Erro",
+              description: "Falha ao abrir o comprovante",
+              variant: "destructive",
             });
           }
         };
@@ -773,7 +773,7 @@ export function TicketTable() {
                 Transferência
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              {localStorage.getItem('role') === 'admin' && (
+              {localStorage.getItem("role") === "admin" && (
                 <DropdownMenuItem
                   onClick={() => setTicketToDelete(ticket)}
                   className="text-red-600"
@@ -799,7 +799,7 @@ export function TicketTable() {
     getFilteredRowModel: getFilteredRowModel(),
     filterFns: {
       service: (row, id, filterValue) => {
-        if (filterValue === 'all') return true;
+        if (filterValue === "all") return true;
         return row.original.service._id === filterValue;
       },
     },
@@ -827,31 +827,31 @@ export function TicketTable() {
   // Update CreateTicketDialog component
   const CreateTicketDialog = ({ open, onClose }: DialogProps) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [selectedDiscount, setSelectedDiscount] = useState<string>('');
+    const [selectedDiscount, setSelectedDiscount] = useState<string>("");
 
     const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
       try {
         setIsSubmitting(true);
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem("token");
         const formData = new FormData();
 
-        formData.append('ticket', newTicket.ticket);
-        formData.append('serviceId', newTicket.serviceId);
-        formData.append('client', newTicket.client);
-        formData.append('email', newTicket.email);
-        formData.append('startDate', newTicket.startDate);
+        formData.append("ticket", newTicket.ticket);
+        formData.append("serviceId", newTicket.serviceId);
+        formData.append("client", newTicket.client);
+        formData.append("email", newTicket.email);
+        formData.append("startDate", newTicket.startDate);
 
         if (newTicket.discountId) {
-          formData.append('discountId', newTicket.discountId);
+          formData.append("discountId", newTicket.discountId);
         }
 
         if (newTicket.proof) {
-          formData.append('proof', newTicket.proof);
+          formData.append("proof", newTicket.proof);
         }
 
-        const response = await fetch('/api/tickets/new', {
-          method: 'POST',
+        const response = await fetch("/api/tickets/new", {
+          method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -860,38 +860,38 @@ export function TicketTable() {
 
         if (!response.ok) {
           const error = await response.json();
-          throw new Error(error.message || 'Failed to create ticket');
+          throw new Error(error.message || "Failed to create ticket");
         }
 
         const result = await response.json();
-        console.log('Ticket criado:', result);
+        console.log("Ticket criado:", result);
 
         setIsDialogOpen(false);
         // Reset form
         setNewTicket({
-          ticket: '',
-          serviceId: '',
-          client: '',
-          email: '',
-          startDate: '',
-          endDate: '',
+          ticket: "",
+          serviceId: "",
+          client: "",
+          email: "",
+          startDate: "",
+          endDate: "",
           discountId: undefined,
           proof: undefined,
         });
 
         toast({
-          title: 'Success',
-          description: 'Ticket created successfully',
+          title: "Success",
+          description: "Ticket created successfully",
         });
 
         await fetchTickets();
       } catch (error) {
-        console.error('Error creating ticket:', error);
+        console.error("Error creating ticket:", error);
         toast({
-          variant: 'destructive',
-          title: 'Error',
+          variant: "destructive",
+          title: "Error",
           description:
-            error instanceof Error ? error.message : 'Failed to create ticket',
+            error instanceof Error ? error.message : "Failed to create ticket",
         });
       } finally {
         setIsSubmitting(false);
@@ -911,9 +911,9 @@ export function TicketTable() {
             <div className="space-y-2">
               <Label htmlFor="service">Service</Label>
               <Select
-                value={newTicket.serviceId || 'select-service'}
+                value={newTicket.serviceId || "select-service"}
                 onValueChange={(value) =>
-                  handleServiceChange(value === 'select-service' ? '' : value)
+                  handleServiceChange(value === "select-service" ? "" : value)
                 }
               >
                 <SelectTrigger>
@@ -925,7 +925,7 @@ export function TicketTable() {
                   </SelectItem>
                   {services
                     .filter(
-                      (service) => service._id && service._id.trim() !== ''
+                      (service) => service._id && service._id.trim() !== "",
                     )
                     .map((service) => (
                       <SelectItem key={service._id} value={service._id}>
@@ -942,7 +942,7 @@ export function TicketTable() {
                 disabled={isSubmitting}
                 onClick={handleCreateTicket}
               >
-                {isSubmitting ? 'Creating...' : 'Create Ticket'}
+                {isSubmitting ? "Creating..." : "Create Ticket"}
               </Button>
             </DialogFooter>
           </form>
@@ -969,9 +969,9 @@ export function TicketTable() {
                 className="object-contain w-full h-auto max-h-144"
                 onError={() => {
                   toast({
-                    title: 'Error',
-                    description: 'Failed to load image',
-                    variant: 'destructive',
+                    title: "Error",
+                    description: "Failed to load image",
+                    variant: "destructive",
                   });
                   setDialogOpen(false);
                 }}
@@ -989,7 +989,7 @@ export function TicketTable() {
             <AlertDialogHeader>
               <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
               <AlertDialogDescription>
-                This will hide the ticket{' '}
+                This will hide the ticket{" "}
                 <span className="font-semibold">#{ticketToDelete.ticket}</span>.
                 This action cannot be undone.
               </AlertDialogDescription>
@@ -1009,18 +1009,18 @@ export function TicketTable() {
       <div className="flex items-center py-4 space-x-4">
         <Input
           placeholder="Filter tickets..."
-          value={(table.getColumn('ticket')?.getFilterValue() as string) ?? ''}
+          value={(table.getColumn("ticket")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
-            table.getColumn('ticket')?.setFilterValue(event.target.value)
+            table.getColumn("ticket")?.setFilterValue(event.target.value)
           }
           className="max-w-sm"
         />
         <Select
           value={
-            (table.getColumn('service')?.getFilterValue() as string) ?? 'all'
+            (table.getColumn("service")?.getFilterValue() as string) ?? "all"
           }
           onValueChange={(value) =>
-            table.getColumn('service')?.setFilterValue(value)
+            table.getColumn("service")?.setFilterValue(value)
           }
         >
           <SelectTrigger className="w-[180px]">
@@ -1040,7 +1040,7 @@ export function TicketTable() {
                       </SelectItem>
                     ))}
                 </SelectGroup>
-              )
+              ),
             )}
           </SelectContent>
         </Select>
@@ -1085,14 +1085,14 @@ export function TicketTable() {
                     </SelectTrigger>
                     <SelectContent>
                       {Array.from(
-                        new Set(services.map((s) => s.category.name))
+                        new Set(services.map((s) => s.category.name)),
                       ).map((categoryName) => (
                         <SelectGroup key={categoryName}>
                           <SelectLabel>{categoryName}</SelectLabel>
                           {services
                             .filter(
                               (service) =>
-                                service.category.name === categoryName
+                                service.category.name === categoryName,
                             )
                             .map((service) => (
                               <SelectItem key={service._id} value={service._id}>
@@ -1209,7 +1209,7 @@ export function TicketTable() {
                 disabled={isSubmitting}
                 onClick={handleCreateTicket}
               >
-                {isSubmitting ? 'Creating...' : 'Create Ticket'}
+                {isSubmitting ? "Creating..." : "Create Ticket"}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -1253,7 +1253,7 @@ export function TicketTable() {
                       ? null
                       : flexRender(
                           header.column.columnDef.header,
-                          header.getContext()
+                          header.getContext(),
                         )}
                   </TableHead>
                 ))}
@@ -1265,13 +1265,13 @@ export function TicketTable() {
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
-                  data-state={row.getIsSelected() && 'selected'}
+                  data-state={row.getIsSelected() && "selected"}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id} className="px-1 py-1 text-center">
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </TableCell>
                   ))}
@@ -1292,7 +1292,7 @@ export function TicketTable() {
       </div>
       <div className="flex items-center justify-end space-x-2 py-4">
         <div className="flex-1 text-sm text-muted-foreground">
-          {table.getFilteredSelectedRowModel().rows.length} of{' '}
+          {table.getFilteredSelectedRowModel().rows.length} of{" "}
           {table.getFilteredRowModel().rows.length} row(s) selected.
         </div>
         <Button
@@ -1353,19 +1353,19 @@ const CreateTicketDialog: React.FC<CreateTicketDialogProps> = ({
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [newTicket, setNewTicket] = useState<NewTicket>({
-    ticket: '',
-    serviceId: '',
-    client: '',
-    email: '',
-    startDate: '',
-    endDate: '',
+    ticket: "",
+    serviceId: "",
+    client: "",
+    email: "",
+    startDate: "",
+    endDate: "",
     discountId: undefined,
     proof: undefined,
   });
 
   const handleTicketChange = (
     field: keyof NewTicket,
-    value: string | File | undefined
+    value: string | File | undefined,
   ) => {
     setNewTicket((prev) => ({
       ...prev,
@@ -1376,26 +1376,26 @@ const CreateTicketDialog: React.FC<CreateTicketDialogProps> = ({
   const handleCreateTicket = async () => {
     setIsSubmitting(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       const formData = new FormData();
 
-      formData.append('ticket', newTicket.ticket);
-      formData.append('serviceId', newTicket.serviceId);
-      formData.append('client', newTicket.client);
-      formData.append('email', newTicket.email);
-      formData.append('startDate', newTicket.startDate);
+      formData.append("ticket", newTicket.ticket);
+      formData.append("serviceId", newTicket.serviceId);
+      formData.append("client", newTicket.client);
+      formData.append("email", newTicket.email);
+      formData.append("startDate", newTicket.startDate);
 
       if (newTicket.discountId) {
-        formData.append('discountId', newTicket.discountId);
+        formData.append("discountId", newTicket.discountId);
       }
 
       if (newTicket.proof) {
-        formData.append('proof', newTicket.proof);
+        formData.append("proof", newTicket.proof);
       }
 
       // Submit the form data to the API
-      const response = await fetch('/api/tickets/new', {
-        method: 'POST',
+      const response = await fetch("/api/tickets/new", {
+        method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -1403,26 +1403,26 @@ const CreateTicketDialog: React.FC<CreateTicketDialogProps> = ({
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create ticket');
+        throw new Error("Failed to create ticket");
       }
 
       // Handle success
       onTicketCreated();
       setNewTicket({
-        ticket: '',
-        serviceId: '',
-        client: '',
-        email: '',
-        startDate: '',
-        endDate: '',
+        ticket: "",
+        serviceId: "",
+        client: "",
+        email: "",
+        startDate: "",
+        endDate: "",
         discountId: undefined,
         proof: undefined,
       });
-      alert('Ticket created successfully');
+      alert("Ticket created successfully");
       onClose();
     } catch (error) {
       console.error(error);
-      alert('Error creating ticket');
+      alert("Error creating ticket");
     } finally {
       setIsSubmitting(false);
     }
@@ -1442,7 +1442,7 @@ const CreateTicketDialog: React.FC<CreateTicketDialogProps> = ({
               <Input
                 id="ticket"
                 value={newTicket.ticket}
-                onChange={(e) => handleTicketChange('ticket', e.target.value)}
+                onChange={(e) => handleTicketChange("ticket", e.target.value)}
                 required
               />
             </div>
@@ -1453,7 +1453,7 @@ const CreateTicketDialog: React.FC<CreateTicketDialogProps> = ({
               <Input
                 id="client"
                 value={newTicket.client}
-                onChange={(e) => handleTicketChange('client', e.target.value)}
+                onChange={(e) => handleTicketChange("client", e.target.value)}
                 required
               />
             </div>
@@ -1465,7 +1465,7 @@ const CreateTicketDialog: React.FC<CreateTicketDialogProps> = ({
                 id="email"
                 type="email"
                 value={newTicket.email}
-                onChange={(e) => handleTicketChange('email', e.target.value)}
+                onChange={(e) => handleTicketChange("email", e.target.value)}
                 required
               />
             </div>
@@ -1478,7 +1478,7 @@ const CreateTicketDialog: React.FC<CreateTicketDialogProps> = ({
                 type="date"
                 value={newTicket.startDate}
                 onChange={(e) =>
-                  handleTicketChange('startDate', e.target.value)
+                  handleTicketChange("startDate", e.target.value)
                 }
                 required
               />
@@ -1490,7 +1490,7 @@ const CreateTicketDialog: React.FC<CreateTicketDialogProps> = ({
               <Select
                 value={newTicket.serviceId}
                 onValueChange={(value) =>
-                  handleTicketChange('serviceId', value)
+                  handleTicketChange("serviceId", value)
                 }
               >
                 <SelectTrigger>
@@ -1510,11 +1510,11 @@ const CreateTicketDialog: React.FC<CreateTicketDialogProps> = ({
             <div className="space-y-2">
               <Label htmlFor="discount">Discount</Label>
               <Select
-                value={newTicket.discountId || 'no-discount'}
+                value={newTicket.discountId || "no-discount"}
                 onValueChange={(value) =>
                   handleTicketChange(
-                    'discountId',
-                    value === 'no-discount' ? undefined : value
+                    "discountId",
+                    value === "no-discount" ? undefined : value,
                   )
                 }
               >
@@ -1532,7 +1532,7 @@ const CreateTicketDialog: React.FC<CreateTicketDialogProps> = ({
                 type="file"
                 accept="image/*,application/pdf"
                 onChange={(e) =>
-                  handleTicketChange('proof', e.target.files?.[0])
+                  handleTicketChange("proof", e.target.files?.[0])
                 }
               />
             </div>
@@ -1543,7 +1543,7 @@ const CreateTicketDialog: React.FC<CreateTicketDialogProps> = ({
               onClick={handleCreateTicket}
               disabled={isSubmitting}
             >
-              {isSubmitting ? 'Creating...' : 'Create Ticket'}
+              {isSubmitting ? "Creating..." : "Create Ticket"}
             </Button>
           </DialogFooter>
         </form>

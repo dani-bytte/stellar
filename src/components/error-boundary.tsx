@@ -1,5 +1,5 @@
-import React from 'react';
-import { Button } from '@/components/ui/button';
+import React from "react";
+import { Button } from "@/components/ui/button";
 
 interface ErrorReportService {
   captureException: (error: Error, errorInfo?: React.ErrorInfo) => void;
@@ -33,7 +33,7 @@ export class ErrorBoundary extends React.Component<
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('Error caught by ErrorBoundary:', error, errorInfo);
+    console.error("Error caught by ErrorBoundary:", error, errorInfo);
 
     // Reportar erro para serviço se fornecido
     if (this.props.errorReportService) {
@@ -56,7 +56,7 @@ export class ErrorBoundary extends React.Component<
         <div className="flex flex-col items-center justify-center min-h-[300px] p-6">
           <h2 className="text-xl font-semibold mb-4">Something went wrong</h2>
           <p className="text-muted-foreground mb-4">
-            {this.state.error?.message || 'An unexpected error occurred'}
+            {this.state.error?.message || "An unexpected error occurred"}
           </p>
           <div className="flex gap-3">
             <Button

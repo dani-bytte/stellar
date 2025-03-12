@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import * as React from 'react';
-import withAuth from '@/components/withAuth';
-import PaymentTable from './payments';
+import * as React from "react";
+import withAuth from "@/components/withAuth";
+import PaymentTable from "./payments";
 
 interface Payment {
   _id: string;
@@ -24,14 +24,14 @@ const PaymentsPage = () => {
 
   const fetchPayments = async () => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) throw new Error('No token found');
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("No token found");
 
-      const response = await fetch('/api/home/admin/payments/list', {
-        method: 'GET',
+      const response = await fetch("/api/home/admin/payments/list", {
+        method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       });
 
@@ -40,10 +40,10 @@ const PaymentsPage = () => {
       }
 
       const paymentData = await response.json();
-      console.log('Fetched payments:', paymentData); // Debug log
+      console.log("Fetched payments:", paymentData); // Debug log
       setPayments(paymentData);
     } catch (error) {
-      console.error('Error fetching payments:', error);
+      console.error("Error fetching payments:", error);
     } finally {
       setIsLoading(false);
     }
@@ -55,7 +55,7 @@ const PaymentsPage = () => {
 
   // Add debug useEffect
   React.useEffect(() => {
-    console.log('Current payments:', payments); // Debug log
+    console.log("Current payments:", payments); // Debug log
   }, [payments]);
 
   return (
@@ -74,4 +74,4 @@ const PaymentsPage = () => {
   );
 };
 
-export default withAuth(PaymentsPage, { requiredRole: 'admin' });
+export default withAuth(PaymentsPage, { requiredRole: "admin" });

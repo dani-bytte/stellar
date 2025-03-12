@@ -1,4 +1,4 @@
-import * as React from 'react';
+import * as React from "react";
 import {
   Card,
   CardContent,
@@ -6,8 +6,8 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 interface FormSectionProps {
   title: string;
@@ -21,7 +21,7 @@ interface FormSectionProps {
   className?: string;
   readOnly?: boolean;
   extraActions?: React.ReactNode;
-  layout?: 'vertical' | 'horizontal';
+  layout?: "vertical" | "horizontal";
 }
 
 export function FormSection({
@@ -29,17 +29,17 @@ export function FormSection({
   description,
   children,
   onSubmit,
-  submitText = 'Save',
-  cancelText = 'Cancel',
+  submitText = "Save",
+  cancelText = "Cancel",
   onCancel,
   isSubmitting = false,
-  className = '',
+  className = "",
   readOnly = false,
   extraActions,
-  layout = 'vertical',
+  layout = "vertical",
 }: FormSectionProps) {
   const contentClass =
-    layout === 'horizontal' ? 'grid grid-cols-1 md:grid-cols-2 gap-4' : '';
+    layout === "horizontal" ? "grid grid-cols-1 md:grid-cols-2 gap-4" : "";
 
   return (
     <Card className={className}>
@@ -55,7 +55,7 @@ export function FormSection({
                   ? React.cloneElement(child, {
                       disabled: true,
                     } as React.HTMLAttributes<HTMLElement>)
-                  : child
+                  : child,
               )
             : children}
         </CardContent>
@@ -74,7 +74,7 @@ export function FormSection({
                 </Button>
               )}
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? 'Saving...' : submitText}
+                {isSubmitting ? "Saving..." : submitText}
               </Button>
             </>
           )}

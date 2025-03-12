@@ -1,8 +1,8 @@
-import { useState, useCallback, useRef } from 'react';
-import { LOCAL_STORAGE_KEYS } from '@/lib/constants';
+import { useState, useCallback, useRef } from "react";
+import { LOCAL_STORAGE_KEYS } from "@/lib/constants";
 
 interface ApiOptions {
-  method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
+  method?: "GET" | "POST" | "PUT" | "DELETE";
   body?: Record<string, unknown>;
   headers?: HeadersInit;
   cache?: boolean;
@@ -33,16 +33,16 @@ export function useApi<T>(initialUrl: string, initialOptions?: ApiOptions) {
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const getCacheKey = (url: string, options?: ApiOptions) => {
-    if (!options || options.method === 'GET') {
+    if (!options || options.method === "GET") {
       return url;
     }
-    return '';
+    return "";
   };
 
   const fetchData = useCallback(
     async (
       url: string = initialUrl,
-      options: ApiOptions = initialOptions || {}
+      options: ApiOptions = initialOptions || {},
     ) => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
@@ -68,22 +68,22 @@ export function useApi<T>(initialUrl: string, initialOptions?: ApiOptions) {
       try {
         const token = localStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN);
         const headers = {
-          'Content-Type': 'application/json',
-          Authorization: token ? `Bearer ${token}` : '',
+          "Content-Type": "application/json",
+          Authorization: token ? `Bearer ${token}` : "",
           ...options.headers,
         };
 
         const timeoutPromise = options.timeout
           ? new Promise<never>((_, reject) =>
               setTimeout(
-                () => reject(new Error('Request timeout')),
-                options.timeout
-              )
+                () => reject(new Error("Request timeout")),
+                options.timeout,
+              ),
             )
           : null;
 
         const fetchPromise = fetch(url, {
-          method: options.method || 'GET',
+          method: options.method || "GET",
           headers,
           body: options.body ? JSON.stringify(options.body) : undefined,
           signal: controller.signal,
@@ -107,19 +107,19 @@ export function useApi<T>(initialUrl: string, initialOptions?: ApiOptions) {
         setState({ data, loading: false, error: null });
         return data;
       } catch (error) {
-        if (error instanceof DOMException && error.name === 'AbortError') {
+        if (error instanceof DOMException && error.name === "AbortError") {
           return;
         }
 
         const errorMessage =
-          error instanceof Error ? error.message : 'Unknown error occurred';
+          error instanceof Error ? error.message : "Unknown error occurred";
         setState((prev) => ({ ...prev, loading: false, error: errorMessage }));
         throw error;
       } finally {
         abortControllerRef.current = null;
       }
     },
-    [initialUrl, initialOptions]
+    [initialUrl, initialOptions],
   );
 
   const clearCache = useCallback((specificUrl?: string) => {

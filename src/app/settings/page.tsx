@@ -1,29 +1,29 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import Image from 'next/image';
+import React, { useState, useEffect } from "react";
+import Image from "next/image";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from '@/components/ui/accordion';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card } from '@/components/ui/card';
-import { Edit2, Save } from 'lucide-react';
+} from "@/components/ui/accordion";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
+import { Edit2, Save } from "lucide-react";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { Alert } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
-import { AlertTitle, AlertDescription } from '@/components/ui/alert';
-import withAuth from '@/components/withAuth';
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Alert } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
+import { AlertTitle, AlertDescription } from "@/components/ui/alert";
+import withAuth from "@/components/withAuth";
 
 interface UserProfile {
   fullName: string;
@@ -33,7 +33,7 @@ interface UserProfile {
   pixKey: string;
   birthDate: string;
   avatar?: string;
-  theme?: 'light' | 'dark' | 'system';
+  theme?: "light" | "dark" | "system";
   notifications?: {
     email: boolean;
     whatsapp: boolean;
@@ -68,24 +68,24 @@ const ProfilePage = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const token = localStorage.getItem('token');
-        if (!token) throw new Error('No token found');
+        const token = localStorage.getItem("token");
+        if (!token) throw new Error("No token found");
 
-        const response = await fetch('/api/home/profile', {
+        const response = await fetch("/api/home/profile", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
 
-        if (!response.ok) throw new Error('Failed to fetch profile');
+        if (!response.ok) throw new Error("Failed to fetch profile");
 
         const data = await response.json();
         setProfile(data);
       } catch (error) {
         setError(
-          error instanceof Error ? error.message : 'Failed to load profile'
+          error instanceof Error ? error.message : "Failed to load profile",
         );
-        console.error('Error fetching profile:', error);
+        console.error("Error fetching profile:", error);
       } finally {
         setIsLoading(false);
       }
@@ -115,7 +115,7 @@ const ProfilePage = () => {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-lg text-red-500">
-          {error || 'Profile not found'}
+          {error || "Profile not found"}
         </div>
       </div>
     );
@@ -170,8 +170,8 @@ const ProfilePage = () => {
                     size="icon"
                     onClick={() =>
                       editMode.personal
-                        ? handleSave('personal')
-                        : handleEdit('personal')
+                        ? handleSave("personal")
+                        : handleEdit("personal")
                     }
                   >
                     {editMode.personal ? (
@@ -206,8 +206,8 @@ const ProfilePage = () => {
                   size="icon"
                   onClick={() =>
                     editMode.financial
-                      ? handleSave('financial')
-                      : handleEdit('financial')
+                      ? handleSave("financial")
+                      : handleEdit("financial")
                   }
                 >
                   {editMode.financial ? (
@@ -234,7 +234,7 @@ const ProfilePage = () => {
             <AccordionContent>
               <div className="flex items-center space-x-4">
                 <Image
-                  src={profile.avatar || '/default-avatar.png'}
+                  src={profile.avatar || "/default-avatar.png"}
                   alt="Profile"
                   className="rounded-full object-cover"
                   width={96}
@@ -324,8 +324,8 @@ const ProfilePage = () => {
                   <div>
                     <h4 className="font-medium">Recent Activity</h4>
                     <p className="text-sm text-muted-foreground">
-                      Last login:{' '}
-                      {new Date(profile.lastLogin || '').toLocaleString()}
+                      Last login:{" "}
+                      {new Date(profile.lastLogin || "").toLocaleString()}
                     </p>
                   </div>
                   <Button variant="outline">View Activity</Button>

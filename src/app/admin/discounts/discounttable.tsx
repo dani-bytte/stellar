@@ -1,8 +1,8 @@
 // components/DiscountTable.tsx
-'use client';
+"use client";
 
-import * as React from 'react';
-import { useState } from 'react';
+import * as React from "react";
+import { useState } from "react";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -15,10 +15,10 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
-} from '@tanstack/react-table';
-import { ArrowUpDown, ChevronDown, MoreHorizontal } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+} from "@tanstack/react-table";
+import { ArrowUpDown, ChevronDown, MoreHorizontal } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -26,22 +26,22 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Badge } from '@/components/ui/badge';
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -49,9 +49,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { useToast } from '@/hooks/use-toast';
-import { ToastAction } from '@/components/ui/toast';
+} from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "@/components/ui/toast";
 
 interface Discount {
   _id: string;
@@ -74,7 +74,7 @@ const DiscountTable: React.FC<DiscountTableProps> = ({
   const { toast } = useToast();
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
+    [],
   );
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
@@ -82,26 +82,26 @@ const DiscountTable: React.FC<DiscountTableProps> = ({
   const [editingDiscount, setEditingDiscount] = useState<Discount | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [discountToDelete, setDiscountToDelete] = useState<Discount | null>(
-    null
+    null,
   );
 
   const handleDelete = async (discount: Discount) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       const response = await fetch(
         `/api/tickets/discounts/${discount._id}/delet`,
         {
-          method: 'PUT',
+          method: "PUT",
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
-      if (!response.ok) throw new Error('Failed to delete');
+      if (!response.ok) throw new Error("Failed to delete");
 
       toast({
-        description: 'Discount has been deleted successfully',
+        description: "Discount has been deleted successfully",
         action: (
           <ToastAction altText="Undo delete" onClick={() => fetchDiscounts()}>
             Undo
@@ -111,9 +111,9 @@ const DiscountTable: React.FC<DiscountTableProps> = ({
       fetchDiscounts();
     } catch (error) {
       toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Could not delete discount.',
+        variant: "destructive",
+        title: "Error",
+        description: "Could not delete discount.",
       });
     } finally {
       setDeleteDialogOpen(false);
@@ -123,23 +123,23 @@ const DiscountTable: React.FC<DiscountTableProps> = ({
 
   const handleEdit = async (formData: Partial<Discount>) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       const response = await fetch(
         `/api/tickets/discounts/${editingDiscount?._id}`,
         {
-          method: 'PUT',
+          method: "PUT",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(formData),
-        }
+        },
       );
 
-      if (!response.ok) throw new Error('Failed to update');
+      if (!response.ok) throw new Error("Failed to update");
 
       toast({
-        description: 'Discount updated successfully',
+        description: "Discount updated successfully",
         action: (
           <ToastAction altText="Undo changes" onClick={() => fetchDiscounts()}>
             Undo
@@ -149,9 +149,9 @@ const DiscountTable: React.FC<DiscountTableProps> = ({
       fetchDiscounts();
     } catch (error) {
       toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Could not update discount.',
+        variant: "destructive",
+        title: "Error",
+        description: "Could not update discount.",
       });
     } finally {
       setEditingDiscount(null);
@@ -161,7 +161,7 @@ const DiscountTable: React.FC<DiscountTableProps> = ({
   const columns = React.useMemo<ColumnDef<Discount>[]>(
     () => [
       {
-        id: 'select',
+        id: "select",
         enableHiding: false,
         header: ({ table }) => (
           <Checkbox
@@ -181,11 +181,11 @@ const DiscountTable: React.FC<DiscountTableProps> = ({
         ),
       },
       {
-        accessorKey: 'cargo',
+        accessorKey: "cargo",
         header: ({ column }) => (
           <Button
             variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
             Role
             <ArrowUpDown className="ml-2 h-4 w-4" />
@@ -193,31 +193,31 @@ const DiscountTable: React.FC<DiscountTableProps> = ({
         ),
       },
       {
-        accessorKey: 'desconto',
+        accessorKey: "desconto",
         header: ({ column }) => (
           <Button
             variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
             Discount (%)
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         ),
-        cell: ({ row }) => `${row.getValue('desconto')}%`,
+        cell: ({ row }) => `${row.getValue("desconto")}%`,
       },
       {
-        accessorKey: 'visivel',
-        header: 'Status',
+        accessorKey: "visivel",
+        header: "Status",
         cell: ({ row }) => (
-          <Badge variant={row.getValue('visivel') ? 'default' : 'secondary'}>
-            {row.getValue('visivel') ? 'Visible' : 'Hidden'}
+          <Badge variant={row.getValue("visivel") ? "default" : "secondary"}>
+            {row.getValue("visivel") ? "Visible" : "Hidden"}
           </Badge>
         ),
       },
       {
-        id: 'actions',
+        id: "actions",
         enableHiding: false,
-        header: 'Actions',
+        header: "Actions",
         cell: ({ row }) => {
           const discount = row.original;
           return (
@@ -247,7 +247,7 @@ const DiscountTable: React.FC<DiscountTableProps> = ({
         },
       },
     ],
-    []
+    [],
   );
 
   const table = useReactTable({
@@ -278,9 +278,9 @@ const DiscountTable: React.FC<DiscountTableProps> = ({
       <div className="flex items-center py-4">
         <Input
           placeholder="Filter by role..."
-          value={(table.getColumn('cargo')?.getFilterValue() as string) ?? ''}
+          value={(table.getColumn("cargo")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
-            table.getColumn('cargo')?.setFilterValue(event.target.value)
+            table.getColumn("cargo")?.setFilterValue(event.target.value)
           }
           className="max-w-sm"
         />
@@ -290,24 +290,24 @@ const DiscountTable: React.FC<DiscountTableProps> = ({
           onClick={() => {
             const handleCreate = async () => {
               try {
-                const token = localStorage.getItem('token');
-                const response = await fetch('/api/tickets/discounts', {
-                  method: 'POST',
+                const token = localStorage.getItem("token");
+                const response = await fetch("/api/tickets/discounts", {
+                  method: "POST",
                   headers: {
-                    'Content-Type': 'application/json',
+                    "Content-Type": "application/json",
                     Authorization: `Bearer ${token}`,
                   },
                   body: JSON.stringify({
-                    cargo: 'New Role',
+                    cargo: "New Role",
                     desconto: 0,
                     visivel: true,
                   }),
                 });
 
-                if (!response.ok) throw new Error('Failed to create');
+                if (!response.ok) throw new Error("Failed to create");
 
                 toast({
-                  description: 'Discount created successfully',
+                  description: "Discount created successfully",
                   action: (
                     <ToastAction
                       altText="Undo create"
@@ -320,9 +320,9 @@ const DiscountTable: React.FC<DiscountTableProps> = ({
                 fetchDiscounts();
               } catch (error) {
                 toast({
-                  variant: 'destructive',
-                  title: 'Error',
-                  description: 'Could not create discount.',
+                  variant: "destructive",
+                  title: "Error",
+                  description: "Could not create discount.",
                 });
               }
             };
@@ -345,7 +345,7 @@ const DiscountTable: React.FC<DiscountTableProps> = ({
                       ? null
                       : flexRender(
                           header.column.columnDef.header,
-                          header.getContext()
+                          header.getContext(),
                         )}
                   </TableHead>
                 ))}
@@ -357,13 +357,13 @@ const DiscountTable: React.FC<DiscountTableProps> = ({
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
-                  data-state={row.getIsSelected() && 'selected'}
+                  data-state={row.getIsSelected() && "selected"}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </TableCell>
                   ))}
@@ -464,8 +464,8 @@ const DiscountTable: React.FC<DiscountTableProps> = ({
               e.preventDefault();
               const formData = new FormData(e.currentTarget);
               handleEdit({
-                cargo: formData.get('cargo') as string,
-                desconto: Number(formData.get('desconto')),
+                cargo: formData.get("cargo") as string,
+                desconto: Number(formData.get("desconto")),
               });
             }}
           >

@@ -19,13 +19,13 @@ function isUserTicketArray(data: unknown): data is UserTicket[] {
   if (!Array.isArray(data)) return false;
 
   return data.every((item): item is UserTicket => {
-    if (!item || typeof item !== 'object') return false;
+    if (!item || typeof item !== "object") return false;
 
     return (
-      'username' in item &&
-      'ticketCount' in item &&
-      typeof (item as UserTicket).username === 'string' &&
-      typeof (item as UserTicket).ticketCount === 'number'
+      "username" in item &&
+      "ticketCount" in item &&
+      typeof (item as UserTicket).username === "string" &&
+      typeof (item as UserTicket).ticketCount === "number"
     );
   });
 }

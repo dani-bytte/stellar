@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import * as React from 'react';
+import * as React from "react";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -12,11 +12,11 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
-} from '@tanstack/react-table';
-import { ArrowUpDown, ChevronDown, MoreHorizontal } from 'lucide-react';
+} from "@tanstack/react-table";
+import { ArrowUpDown, ChevronDown, MoreHorizontal } from "lucide-react";
 
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -25,8 +25,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -34,8 +34,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Label } from '@/components/ui/label';
+} from "@/components/ui/table";
+import { Label } from "@/components/ui/label";
 import {
   Sheet,
   SheetClose,
@@ -44,7 +44,7 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-} from '@/components/ui/sheet';
+} from "@/components/ui/sheet";
 import {
   Dialog,
   DialogContent,
@@ -53,8 +53,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
-import { useToast } from '@/hooks/use-toast';
+} from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -64,7 +64,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from "@/components/ui/alert-dialog";
 
 // Updated User type
 export type User = {
@@ -89,7 +89,7 @@ export function UserTable() {
   const [, setLoading] = React.useState<boolean>(true);
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
+    [],
   );
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({
@@ -101,17 +101,17 @@ export function UserTable() {
   const [isProfileLoading, setIsProfileLoading] = React.useState(false);
   const [profileError, setProfileError] = React.useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
-  const [newUser, setNewUser] = React.useState({ username: '', email: '' });
+  const [newUser, setNewUser] = React.useState({ username: "", email: "" });
   const [isDeactivateDialogOpen, setIsDeactivateDialogOpen] =
     React.useState(false);
   const [userToDeactivate, setUserToDeactivate] = React.useState<User | null>(
-    null
+    null,
   );
 
   const fetchUsers = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/auth/userinfo', {
+      const token = localStorage.getItem("token");
+      const response = await fetch("/api/auth/userinfo", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -120,8 +120,8 @@ export function UserTable() {
       setData(users);
     } catch (error: unknown) {
       const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error occurred';
-      console.error('Erro ao buscar usuários:', errorMessage);
+        error instanceof Error ? error.message : "Unknown error occurred";
+      console.error("Erro ao buscar usuários:", errorMessage);
     } finally {
       setLoading(false);
     }
@@ -137,14 +137,14 @@ export function UserTable() {
     setProfileError(null);
 
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       const params = new URLSearchParams({ user: userId });
 
       const response = await fetch(`/api/home/profile?${params}`, {
-        method: 'GET',
+        method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       });
 
@@ -153,8 +153,8 @@ export function UserTable() {
       return text ? JSON.parse(text) : null;
     } catch (error) {
       const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error occurred';
-      console.error('Error fetching profile:', errorMessage);
+        error instanceof Error ? error.message : "Unknown error occurred";
+      console.error("Error fetching profile:", errorMessage);
       setProfileError(errorMessage);
       return null;
     } finally {
@@ -164,12 +164,12 @@ export function UserTable() {
 
   const handleRegisterUser = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
+      const token = localStorage.getItem("token");
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(newUser),
       });
@@ -178,40 +178,40 @@ export function UserTable() {
 
       if (!response.ok) {
         toast({
-          title: 'Error',
-          description: data.error || 'Failed to register user',
-          variant: 'destructive',
+          title: "Error",
+          description: data.error || "Failed to register user",
+          variant: "destructive",
         });
         return;
       }
 
       setIsDialogOpen(false);
-      setNewUser({ username: '', email: '' });
+      setNewUser({ username: "", email: "" });
       await fetchUsers();
 
       toast({
-        title: 'Success',
-        description: 'User registered successfully',
+        title: "Success",
+        description: "User registered successfully",
       });
     } catch (error) {
-      console.error('Error registering user:', error);
+      console.error("Error registering user:", error);
       toast({
-        title: 'Error',
-        description: 'An unexpected error occurred',
-        variant: 'destructive',
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
       });
     }
   };
 
   const handleDeactivateUser = async (userId: string) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       // Fix: Remove colon from URL parameter
       const response = await fetch(`/api/auth/users/${userId}/deactivate`, {
-        method: 'PUT',
+        method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       });
 
@@ -221,28 +221,28 @@ export function UserTable() {
         // Handle specific error cases from backend
         switch (response.status) {
           case 403:
-            throw new Error(data.error || 'Permission denied');
+            throw new Error(data.error || "Permission denied");
           case 404:
-            throw new Error('User not found');
+            throw new Error("User not found");
           case 400:
-            throw new Error(data.error || 'Invalid request');
+            throw new Error(data.error || "Invalid request");
           default:
-            throw new Error(data.error || 'Failed to deactivate user');
+            throw new Error(data.error || "Failed to deactivate user");
         }
       }
 
       toast({
-        title: 'Success',
-        description: data.message || 'User deactivated successfully',
+        title: "Success",
+        description: data.message || "User deactivated successfully",
       });
 
       await fetchUsers();
     } catch (error) {
       toast({
-        title: 'Error',
+        title: "Error",
         description:
-          error instanceof Error ? error.message : 'Failed to deactivate user',
-        variant: 'destructive',
+          error instanceof Error ? error.message : "Failed to deactivate user",
+        variant: "destructive",
       });
     } finally {
       setUserToDeactivate(null);
@@ -252,12 +252,12 @@ export function UserTable() {
 
   const columns: ColumnDef<User>[] = [
     {
-      id: 'select',
+      id: "select",
       header: ({ table }) => (
         <Checkbox
           checked={
             table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && 'indeterminate')
+            (table.getIsSomePageRowsSelected() && "indeterminate")
           }
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
           aria-label="Select all"
@@ -274,28 +274,28 @@ export function UserTable() {
       enableHiding: false,
     },
     {
-      accessorKey: 'username',
+      accessorKey: "username",
       header: ({ column }) => {
         return (
           <Button
             variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
             Username
             <ArrowUpDown />
           </Button>
         );
       },
-      cell: ({ row }) => <div>{row.getValue('username')}</div>,
+      cell: ({ row }) => <div>{row.getValue("username")}</div>,
       enableSorting: true,
     },
     {
-      accessorKey: 'email',
+      accessorKey: "email",
       header: ({ column }) => {
         return (
           <Button
             variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
             Email
             <ArrowUpDown />
@@ -303,24 +303,24 @@ export function UserTable() {
         );
       },
       cell: ({ row }) => (
-        <div className="lowercase">{row.getValue('email')}</div>
+        <div className="lowercase">{row.getValue("email")}</div>
       ),
     },
     {
-      accessorKey: 'role',
-      header: 'Role',
-      cell: ({ row }) => <div>{row.getValue('role')}</div>,
+      accessorKey: "role",
+      header: "Role",
+      cell: ({ row }) => <div>{row.getValue("role")}</div>,
     },
     {
-      accessorKey: 'isTemporaryPassword',
-      header: 'Temporary Password',
+      accessorKey: "isTemporaryPassword",
+      header: "Temporary Password",
       cell: ({ row }) => (
-        <div>{row.getValue('isTemporaryPassword') ? 'Yes' : 'No'}</div>
+        <div>{row.getValue("isTemporaryPassword") ? "Yes" : "No"}</div>
       ),
       enableHiding: true,
     },
     {
-      id: 'actions',
+      id: "actions",
       enableHiding: false,
       cell: ({ row }) => {
         const user = row.original;
@@ -401,10 +401,10 @@ export function UserTable() {
         <Input
           placeholder="Filter usernames..."
           value={
-            (table.getColumn('username')?.getFilterValue() as string) ?? ''
+            (table.getColumn("username")?.getFilterValue() as string) ?? ""
           }
           onChange={(event) =>
-            table.getColumn('username')?.setFilterValue(event.target.value)
+            table.getColumn("username")?.setFilterValue(event.target.value)
           }
           className="max-w-sm"
         />
@@ -494,7 +494,7 @@ export function UserTable() {
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
-                            header.getContext()
+                            header.getContext(),
                           )}
                     </TableHead>
                   );
@@ -507,13 +507,13 @@ export function UserTable() {
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
-                  data-state={row.getIsSelected() && 'selected'}
+                  data-state={row.getIsSelected() && "selected"}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </TableCell>
                   ))}
@@ -534,7 +534,7 @@ export function UserTable() {
       </div>
       <div className="flex items-center justify-end space-x-2 py-4">
         <div className="flex-1 text-sm text-muted-foreground">
-          {table.getFilteredSelectedRowModel().rows.length} of{' '}
+          {table.getFilteredSelectedRowModel().rows.length} of{" "}
           {table.getFilteredRowModel().rows.length} row(s) selected.
         </div>
         <div className="space-x-2">
@@ -649,7 +649,7 @@ export function UserTable() {
                         <Input
                           id="birthDate"
                           value={new Date(
-                            selectedUser.profile.birthDate
+                            selectedUser.profile.birthDate,
                           ).toLocaleDateString()}
                           readOnly
                           className="col-span-3"
@@ -706,7 +706,7 @@ export function UserTable() {
               <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
               <AlertDialogDescription>
                 This action cannot be undone. This will deactivate the user
-                account for{' '}
+                account for{" "}
                 <span className="font-semibold">
                   {userToDeactivate.username}
                 </span>

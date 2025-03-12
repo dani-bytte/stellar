@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import * as React from 'react';
-import { Label, Pie, PieChart } from 'recharts';
+import * as React from "react";
+import { Label, Pie, PieChart } from "recharts";
 import {
   Card,
   CardContent,
@@ -9,17 +9,17 @@ import {
   CardTitle,
   CardDescription,
   CardFooter,
-} from '@/components/ui/card';
+} from "@/components/ui/card";
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-} from '@/components/ui/chart';
+} from "@/components/ui/chart";
 import type {
   UserTicket,
   TicketData,
   TicketDistributionChartProps,
-} from '@/types/chart';
+} from "@/types/chart";
 
 // Define ChartConfig type
 type ChartConfig = {
@@ -35,23 +35,23 @@ type ChartConfig = {
 export function TicketDistributionChart({
   userTicketDistribution = [],
 }: TicketDistributionChartProps) {
-  console.log('userTicketDistribution:', userTicketDistribution); // Debug log
+  console.log("userTicketDistribution:", userTicketDistribution); // Debug log
 
   // Generate dynamic chart config based on users
   const chartConfig: ChartConfig = React.useMemo(() => {
     const config: ChartConfig = {
       tickets: {
-        label: 'Tickets',
+        label: "Tickets",
       },
     };
 
     // Color palette for users
     const colors = [
-      'hsl(var(--chart-1))',
-      'hsl(var(--chart-2))',
-      'hsl(var(--chart-3))',
-      'hsl(var(--chart-4))',
-      'hsl(var(--chart-5))',
+      "hsl(var(--chart-1))",
+      "hsl(var(--chart-2))",
+      "hsl(var(--chart-3))",
+      "hsl(var(--chart-4))",
+      "hsl(var(--chart-5))",
     ];
 
     userTicketDistribution.forEach((user, index) => {
@@ -73,7 +73,7 @@ export function TicketDistributionChart({
         tickets: user.ticketCount,
         fill: `hsl(var(--chart-${(index % 5) + 1}))`, // Cycle through 5 colors
       };
-      console.log('Chart data item:', data); // Debug log
+      console.log("Chart data item:", data); // Debug log
       return data;
     });
   }, [userTicketDistribution]);
@@ -122,7 +122,7 @@ export function TicketDistributionChart({
             >
               <Label
                 content={({ viewBox }) => {
-                  if (viewBox && 'cx' in viewBox && 'cy' in viewBox) {
+                  if (viewBox && "cx" in viewBox && "cy" in viewBox) {
                     return (
                       <text
                         x={viewBox.cx}

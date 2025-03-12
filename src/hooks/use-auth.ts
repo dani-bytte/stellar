@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
-import { LOCAL_STORAGE_KEYS } from '@/lib/constants';
+import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { LOCAL_STORAGE_KEYS } from "@/lib/constants";
 
 export interface AuthUser {
   role: string;
@@ -24,9 +24,9 @@ export function useAuth() {
 
     const role = localStorage.getItem(LOCAL_STORAGE_KEYS.ROLE);
     const hasProfile =
-      localStorage.getItem(LOCAL_STORAGE_KEYS.HAS_PROFILE) === 'true';
+      localStorage.getItem(LOCAL_STORAGE_KEYS.HAS_PROFILE) === "true";
     const isTemporaryPassword =
-      localStorage.getItem(LOCAL_STORAGE_KEYS.IS_TEMPORARY_PASSWORD) === 'true';
+      localStorage.getItem(LOCAL_STORAGE_KEYS.IS_TEMPORARY_PASSWORD) === "true";
 
     if (role) {
       setUser({
@@ -46,10 +46,10 @@ export function useAuth() {
 
   const logout = useCallback(() => {
     Object.values(LOCAL_STORAGE_KEYS).forEach((key) =>
-      localStorage.removeItem(key)
+      localStorage.removeItem(key),
     );
     setUser(null);
-    router.push('/auth/login');
+    router.push("/auth/login");
   }, [router]);
 
   // Adicionar método para verificar autenticação
@@ -64,14 +64,14 @@ export function useAuth() {
     if (userData.hasProfile !== undefined) {
       localStorage.setItem(
         LOCAL_STORAGE_KEYS.HAS_PROFILE,
-        String(userData.hasProfile)
+        String(userData.hasProfile),
       );
     }
 
     if (userData.isTemporaryPassword !== undefined) {
       localStorage.setItem(
         LOCAL_STORAGE_KEYS.IS_TEMPORARY_PASSWORD,
-        String(userData.isTemporaryPassword)
+        String(userData.isTemporaryPassword),
       );
     }
   }, []);

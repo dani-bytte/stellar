@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import React from "react";
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Form,
   FormControl,
@@ -14,15 +14,15 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Card, CardHeader, CardContent } from '@/components/ui/card';
+} from "@/components/ui/form";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
 
 // Schema de Validação para Alteração de Senha
 const changePasswordSchema = z.object({
-  oldPassword: z.string().min(1, 'Senha antiga é obrigatória'),
+  oldPassword: z.string().min(1, "Senha antiga é obrigatória"),
   newPassword: z
     .string()
-    .min(8, 'A nova senha deve ter pelo menos 8 caracteres'),
+    .min(8, "A nova senha deve ter pelo menos 8 caracteres"),
 });
 
 type ChangePasswordFormValues = z.infer<typeof changePasswordSchema>;
@@ -34,27 +34,27 @@ export default function ChangePasswordPage() {
   const changePasswordForm = useForm<ChangePasswordFormValues>({
     resolver: zodResolver(changePasswordSchema),
     defaultValues: {
-      oldPassword: '',
-      newPassword: '',
+      oldPassword: "",
+      newPassword: "",
     },
   });
 
   // Função para lidar com a alteração de senha
   const handleChangePassword = async (values: ChangePasswordFormValues) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
 
       if (!token) {
-        changePasswordForm.setError('root', {
-          message: 'Token não encontrado. Por favor, faça login novamente.',
+        changePasswordForm.setError("root", {
+          message: "Token não encontrado. Por favor, faça login novamente.",
         });
         return;
       }
 
-      const response = await fetch('/api/auth/change-password', {
-        method: 'POST',
+      const response = await fetch("/api/auth/change-password", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(values),
@@ -65,25 +65,25 @@ export default function ChangePasswordPage() {
       if (response.ok) {
         // Update localStorage
         if (data.token) {
-          localStorage.setItem('token', data.token);
+          localStorage.setItem("token", data.token);
         }
-        localStorage.setItem('isTemporaryPassword', 'false');
+        localStorage.setItem("isTemporaryPassword", "false");
 
         // Check profile status
-        const hasProfile = localStorage.getItem('hasProfile') === 'true';
+        const hasProfile = localStorage.getItem("hasProfile") === "true";
         if (!hasProfile) {
-          router.push('/auth/profile');
+          router.push("/auth/profile");
         } else {
-          const role = localStorage.getItem('role');
-          router.push(role === 'admin' ? '/admin' : '/home');
+          const role = localStorage.getItem("role");
+          router.push(role === "admin" ? "/admin" : "/home");
         }
       } else {
-        changePasswordForm.setError('root', { message: data.error });
+        changePasswordForm.setError("root", { message: data.error });
       }
     } catch (error) {
-      console.error('Erro ao alterar a senha:', error);
-      changePasswordForm.setError('root', {
-        message: 'Erro ao alterar a senha. Por favor, tente novamente.',
+      console.error("Erro ao alterar a senha:", error);
+      changePasswordForm.setError("root", {
+        message: "Erro ao alterar a senha. Por favor, tente novamente.",
       });
     }
   };

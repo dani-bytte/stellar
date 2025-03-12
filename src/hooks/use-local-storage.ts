@@ -1,12 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
 export function useLocalStorage<T>(
   key: string,
-  initialValue: T
+  initialValue: T,
 ): [T, (value: T) => void] {
   // Estado para armazenar o valor
   const [storedValue, setStoredValue] = useState<T>(() => {
-    if (typeof window === 'undefined') {
+    if (typeof window === "undefined") {
       return initialValue;
     }
     try {
@@ -21,7 +21,7 @@ export function useLocalStorage<T>(
 
   // Atualiza localStorage quando o estado muda
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       try {
         window.localStorage.setItem(key, JSON.stringify(storedValue));
       } catch (error) {

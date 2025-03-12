@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import * as React from 'react';
-import withAuth from '@/components/withAuth';
-import DiscountTable from './discounttable'; // You'll need to create this component
+import * as React from "react";
+import withAuth from "@/components/withAuth";
+import DiscountTable from "./discounttable"; // You'll need to create this component
 
 const DiscountsPage = () => {
   const [discounts, setDiscounts] = React.useState([]);
@@ -10,19 +10,19 @@ const DiscountsPage = () => {
 
   const fetchDiscounts = async () => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) throw new Error('No token found');
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("No token found");
 
-      const response = await fetch('/api/tickets/discounts/list', {
+      const response = await fetch("/api/tickets/discounts/list", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      if (!response.ok) throw new Error('Failed to fetch discounts');
+      if (!response.ok) throw new Error("Failed to fetch discounts");
       const discountData = await response.json();
       setDiscounts(discountData);
     } catch (error) {
-      console.error('Error fetching discounts:', error);
+      console.error("Error fetching discounts:", error);
     } finally {
       setIsLoading(false);
     }
@@ -48,4 +48,4 @@ const DiscountsPage = () => {
   );
 };
 
-export default withAuth(DiscountsPage, { requiredRole: 'admin' });
+export default withAuth(DiscountsPage, { requiredRole: "admin" });

@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface StatsCardProps {
   title: string;
@@ -9,7 +9,7 @@ interface StatsCardProps {
 export function StatsCard({ title, value, onClick }: StatsCardProps) {
   return (
     <Card
-      className={`text-center ${onClick ? 'cursor-pointer' : ''}`}
+      className={`text-center ${onClick ? "cursor-pointer" : ""}`}
       onClick={onClick}
     >
       <CardHeader>

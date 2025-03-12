@@ -15,7 +15,7 @@ progress {
   height: auto;
 }
 
-[type='search'] {
+[type="search"] {
   -webkit-appearance: textfield;
   appearance: textfield;
   outline-offset: -2px;
@@ -87,7 +87,7 @@ textarea::placeholder {
   color: #9ca3af;
 }
 
-[role='button'],
+[role="button"],
 button {
   cursor: pointer;
 }
@@ -204,7 +204,7 @@ body {
   --tw-contain-size: ;
   --tw-contain-layout: ;
   --tw-contain-paint: ;
-  --tw-contain-style:           
+  --tw-contain-style:            
 ;
 }
 
@@ -259,6 +259,6 @@ body {
   --tw-contain-size: ;
   --tw-contain-layout: ;
   --tw-contain-paint: ;
-  --tw-contain-style:           
+  --tw-contain-style:            
 ;
 }

@@ -1,5 +1,5 @@
-import React from 'react';
-import { UserTable } from './UserTable';
+import React from "react";
+import { UserTable } from "./UserTable";
 
 const UsersPage: React.FC = () => {
   return (

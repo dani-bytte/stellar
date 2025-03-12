@@ -8,7 +8,7 @@ export interface User {
   updatedAt: string;
 }
 
-export type UserRole = 'admin' | 'user' | 'guest';
+export type UserRole = "admin" | "user" | "guest";
 
 export interface UserSession {
   user: User;
@@ -18,7 +18,7 @@ export interface UserSession {
 }
 
 export interface UserPreferences {
-  theme: 'light' | 'dark' | 'system';
-  language: 'pt-BR' | 'en';
+  theme: "light" | "dark" | "system";
+  language: "pt-BR" | "en";
   notifications: boolean;
 }

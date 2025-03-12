@@ -1,7 +1,7 @@
 // components/ServiceTable.tsx
-'use client';
+"use client";
 
-import * as React from 'react';
+import * as React from "react";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -14,11 +14,11 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
-} from '@tanstack/react-table';
-import { ServiceFormSheet } from './ServiceFormSheet';
-import { ArrowUpDown, ChevronDown, MoreHorizontal } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+} from "@tanstack/react-table";
+import { ServiceFormSheet } from "./ServiceFormSheet";
+import { ArrowUpDown, ChevronDown, MoreHorizontal } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -26,22 +26,22 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Badge } from '@/components/ui/badge';
+} from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface Service {
   _id: string;
@@ -54,7 +54,7 @@ interface Service {
   };
 }
 
-declare module '@tanstack/react-table' {
+declare module "@tanstack/react-table" {
   interface ColumnMeta<TData, TValue> {
     columnName?: string;
   }
@@ -74,7 +74,7 @@ const ServiceTable: React.FC<ServiceTableProps> = ({
   const [open, setOpen] = React.useState(false);
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
+    [],
   );
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
@@ -84,7 +84,7 @@ const ServiceTable: React.FC<ServiceTableProps> = ({
   const columns = React.useMemo<ColumnDef<Service>[]>(
     () => [
       {
-        id: 'select',
+        id: "select",
         enableHiding: false,
         header: ({ table }) => (
           <Checkbox
@@ -104,69 +104,69 @@ const ServiceTable: React.FC<ServiceTableProps> = ({
         ),
       },
       {
-        accessorKey: 'name',
+        accessorKey: "name",
         header: ({ column }) => (
           <Button
             variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
             Name
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         ),
         meta: {
-          columnName: 'Name',
+          columnName: "Name",
         },
       },
       {
-        accessorKey: 'category.name',
-        id: 'category',
-        header: 'Category',
+        accessorKey: "category.name",
+        id: "category",
+        header: "Category",
         cell: ({ row }) => (
           <Badge variant="secondary">{row.original.category.name}</Badge>
         ),
         meta: {
-          columnName: 'Category',
+          columnName: "Category",
         },
       },
       {
-        accessorKey: 'dueDate',
+        accessorKey: "dueDate",
         header: ({ column }) => (
           <Button
             variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
             Duration (days)
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         ),
         meta: {
-          columnName: 'Duration (days)',
+          columnName: "Duration (days)",
         },
       },
       {
-        accessorKey: 'value',
+        accessorKey: "value",
         header: ({ column }) => (
           <Button
             variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
             Value
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         ),
         cell: ({ row }) => {
-          const value = row.getValue('value') as number;
+          const value = row.getValue("value") as number;
           return `R$ ${value.toFixed(2)}`;
         },
         meta: {
-          columnName: 'Value',
+          columnName: "Value",
         },
       },
       {
-        id: 'actions',
+        id: "actions",
         enableHiding: false,
-        header: 'Actions',
+        header: "Actions",
         cell: ({ row }) => {
           const service = row.original;
           return (
@@ -189,7 +189,7 @@ const ServiceTable: React.FC<ServiceTableProps> = ({
         },
       },
     ],
-    []
+    [],
   );
 
   // Initialize column visibility state
@@ -200,7 +200,7 @@ const ServiceTable: React.FC<ServiceTableProps> = ({
       const columnId =
         column.id ||
         (column as { accessorKey?: string }).accessorKey?.toString() ||
-        '';
+        "";
       initialVisibility[columnId] = true;
     });
     setColumnVisibility(initialVisibility);
@@ -236,7 +236,7 @@ const ServiceTable: React.FC<ServiceTableProps> = ({
     if (column.meta?.columnName) {
       return column.meta.columnName;
     }
-    if (typeof column.header === 'string') {
+    if (typeof column.header === "string") {
       return column.header;
     }
     return column.id;
@@ -248,9 +248,9 @@ const ServiceTable: React.FC<ServiceTableProps> = ({
         {/* Filter Input */}
         <Input
           placeholder="Filter by name..."
-          value={(table.getColumn('name')?.getFilterValue() as string) ?? ''}
+          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
-            table.getColumn('name')?.setFilterValue(event.target.value)
+            table.getColumn("name")?.setFilterValue(event.target.value)
           }
           className="max-w-sm"
         />
@@ -307,7 +307,7 @@ const ServiceTable: React.FC<ServiceTableProps> = ({
                       ? null
                       : flexRender(
                           header.column.columnDef.header,
-                          header.getContext()
+                          header.getContext(),
                         )}
                   </TableHead>
                 ))}
@@ -319,13 +319,13 @@ const ServiceTable: React.FC<ServiceTableProps> = ({
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
-                  data-state={row.getIsSelected() && 'selected'}
+                  data-state={row.getIsSelected() && "selected"}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </TableCell>
                   ))}

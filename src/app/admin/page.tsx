@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import * as React from 'react';
-import withAuth from '@/components/withAuth';
-import { useEffect, useState, useRef } from 'react';
+import * as React from "react";
+import withAuth from "@/components/withAuth";
+import { useEffect, useState, useRef } from "react";
 import {
   Chart,
   BarController,
@@ -12,17 +12,17 @@ import {
   Title,
   Tooltip,
   Legend,
-} from 'chart.js';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+} from "chart.js";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui';
-import { Separator } from '@radix-ui/react-dropdown-menu';
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui";
+import { Separator } from "@radix-ui/react-dropdown-menu";
 
 // Registrar os componentes do Chart.js
 Chart.register(
@@ -32,12 +32,12 @@ Chart.register(
   LinearScale,
   Title,
   Tooltip,
-  Legend
+  Legend,
 );
-import { TicketDistributionChart } from './grafic';
+import { TicketDistributionChart } from "./grafic";
 
 // Add interface
-import { UserTicket } from '@/types';
+import { UserTicket } from "@/types";
 
 const Admin = () => {
   const [totalUsers, setTotalUsers] = useState(0);
@@ -81,32 +81,32 @@ const Admin = () => {
       }
 
       const ctx = document.getElementById(
-        'ticketsByMonthChart'
+        "ticketsByMonthChart",
       ) as HTMLCanvasElement;
 
       if (ctx) {
         ticketsByMonthChartRef.current = new Chart(ctx, {
-          type: 'bar',
+          type: "bar",
           data: {
             labels: [
-              'Janeiro',
-              'Fevereiro',
-              'Março',
-              'Abril',
-              'Maio',
-              'Junho',
-              'Julho',
-              'Agosto',
-              'Setembro',
-              'Outubro',
-              'Novembro',
-              'Dezembro',
+              "Janeiro",
+              "Fevereiro",
+              "Março",
+              "Abril",
+              "Maio",
+              "Junho",
+              "Julho",
+              "Agosto",
+              "Setembro",
+              "Outubro",
+              "Novembro",
+              "Dezembro",
             ],
             datasets: [
               {
-                label: 'Tickets Abertos',
+                label: "Tickets Abertos",
                 data: ticketsByMonth,
-                backgroundColor: '#36A2EB',
+                backgroundColor: "#36A2EB",
               },
             ],
           },
@@ -114,11 +114,11 @@ const Admin = () => {
             responsive: true,
             plugins: {
               legend: {
-                position: 'top',
+                position: "top",
               },
               title: {
                 display: true,
-                text: 'Tickets Abertos por Mês',
+                text: "Tickets Abertos por Mês",
               },
             },
           },
@@ -130,26 +130,26 @@ const Admin = () => {
   // Update fetchDashboardData in page.tsx
   const fetchDashboardData = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       if (!token) return;
 
       // Fetch ticket count data
-      const ticketCountResponse = await fetch('/api/home/admin/ticketscount', {
+      const ticketCountResponse = await fetch("/api/home/admin/ticketscount", {
         headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       });
 
       const ticketCountData = await ticketCountResponse.json();
-      console.log('Raw ticket count data:', ticketCountData);
+      console.log("Raw ticket count data:", ticketCountData);
       setUserTicketDistribution(ticketCountData as UserTicket[]);
 
       // Fetch dashboard data
-      const dashboardResponse = await fetch('/api/home/admin/dashboard-data', {
+      const dashboardResponse = await fetch("/api/home/admin/dashboard-data", {
         headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       });
 
@@ -166,29 +166,29 @@ const Admin = () => {
         setTicketsByMonth(dashboardData.ticketsByMonth);
       }
     } catch (error) {
-      console.error('Erro ao buscar dados:', error);
+      console.error("Erro ao buscar dados:", error);
     }
   };
 
   // Função para lidar com o clique nos cards
   const handleCardClick = async (cardType: string) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       if (!token) {
-        console.error('Token não encontrado');
+        console.error("Token não encontrado");
         return;
       }
 
-      let endpoint = '';
+      let endpoint = "";
       switch (cardType) {
-        case 'dueTickets':
-          endpoint = '/api/home/admin/overdue-tickets';
+        case "dueTickets":
+          endpoint = "/api/home/admin/overdue-tickets";
           break;
-        case 'todayTickets':
-          endpoint = '/api/home/admin/today-tickets';
+        case "todayTickets":
+          endpoint = "/api/home/admin/today-tickets";
           break;
-        case 'upcomingTickets':
-          endpoint = '/api/home/admin/upcoming-tickets';
+        case "upcomingTickets":
+          endpoint = "/api/home/admin/upcoming-tickets";
           break;
         default:
           return;
@@ -197,19 +197,19 @@ const Admin = () => {
       const response = await fetch(endpoint, {
         headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       });
 
       if (!response.ok) {
-        throw new Error('Erro ao buscar dados do card');
+        throw new Error("Erro ao buscar dados do card");
       }
 
       const data = await response.json();
       setSelectedCardData(data);
       setOpenDialog(true);
     } catch (error) {
-      console.error('Erro ao buscar dados do card:', error);
+      console.error("Erro ao buscar dados do card:", error);
     }
   };
 
@@ -254,7 +254,7 @@ const Admin = () => {
           </Card>
           <Card
             className="text-center cursor-pointer"
-            onClick={() => handleCardClick('dueTickets')}
+            onClick={() => handleCardClick("dueTickets")}
           >
             <CardHeader>
               <CardTitle>Tickets Vencidos</CardTitle>
@@ -265,7 +265,7 @@ const Admin = () => {
           </Card>
           <Card
             className="text-center cursor-pointer"
-            onClick={() => handleCardClick('todayTickets')}
+            onClick={() => handleCardClick("todayTickets")}
           >
             <CardHeader>
               <CardTitle>Vence Hoje</CardTitle>
@@ -276,7 +276,7 @@ const Admin = () => {
           </Card>
           <Card
             className="text-center cursor-pointer"
-            onClick={() => handleCardClick('upcomingTickets')}
+            onClick={() => handleCardClick("upcomingTickets")}
           >
             <CardHeader>
               <CardTitle>Próximos 2 Dias</CardTitle>
@@ -304,16 +304,16 @@ const Admin = () => {
                   </Label>
                   <Label>
                     <p>
-                      <strong>Usuário:</strong>{' '}
-                      {item.createdBy?.username || 'N/A'}
+                      <strong>Usuário:</strong>{" "}
+                      {item.createdBy?.username || "N/A"}
                     </p>
                   </Label>
                   <Label>
                     <p>
-                      <strong>Data de Término:</strong>{' '}
+                      <strong>Data de Término:</strong>{" "}
                       {item.endDate
                         ? new Date(item.endDate).toLocaleDateString()
-                        : 'N/A'}
+                        : "N/A"}
                     </p>
                   </Label>
                 </div>
@@ -347,4 +347,4 @@ const Admin = () => {
   );
 };
 
-export default withAuth(Admin, { requiredRole: 'admin' });
+export default withAuth(Admin, { requiredRole: "admin" });

@@ -1,4 +1,4 @@
-import * as React from 'react';
+import * as React from "react";
 import {
   ColumnDef,
   flexRender,
@@ -9,7 +9,7 @@ import {
   getFilteredRowModel,
   SortingState,
   ColumnFiltersState,
-} from '@tanstack/react-table';
+} from "@tanstack/react-table";
 
 import {
   Table,
@@ -18,15 +18,15 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -55,14 +55,14 @@ export function DataTable<TData, TValue>({
   pageSize = 10,
   pageSizeOptions = [10, 20, 30, 50],
   className,
-  ariaLabel = 'Data table',
+  ariaLabel = "Data table",
   enableExport = false,
-  exportFileName = 'exported-data',
+  exportFileName = "exported-data",
   isLoading = false,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
+    [],
   );
 
   const table = useReactTable({
@@ -96,37 +96,37 @@ export function DataTable<TData, TValue>({
     if (!data.length) return;
 
     const headers = columns
-      .filter((col) => 'accessorKey' in col)
-      .map((col) => ('accessorKey' in col ? String(col.accessorKey) : ''));
+      .filter((col) => "accessorKey" in col)
+      .map((col) => ("accessorKey" in col ? String(col.accessorKey) : ""));
 
     const csvContent = [
-      headers.join(','),
+      headers.join(","),
       ...data.map((row) =>
         headers
           .map((key) =>
             JSON.stringify(
               key
-                .split('.')
+                .split(".")
                 .reduce(
                   (o: Record<string, unknown> | unknown, i: string) =>
-                    o && typeof o === 'object'
+                    o && typeof o === "object"
                       ? (o as Record<string, unknown>)[i]
                       : undefined,
-                  row as Record<string, unknown>
-                ) || ''
-            )
+                  row as Record<string, unknown>,
+                ) || "",
+            ),
           )
-          .join(',')
+          .join(","),
       ),
-    ].join('\n');
+    ].join("\n");
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
 
-    link.setAttribute('href', url);
-    link.setAttribute('download', `${exportFileName}.csv`);
-    link.style.visibility = 'hidden';
+    link.setAttribute("href", url);
+    link.setAttribute("download", `${exportFileName}.csv`);
+    link.style.visibility = "hidden";
 
     document.body.appendChild(link);
     link.click();
@@ -160,7 +160,7 @@ export function DataTable<TData, TValue>({
                       ? null
                       : flexRender(
                           header.column.columnDef.header,
-                          header.getContext()
+                          header.getContext(),
                         )}
                   </TableHead>
                 ))}
@@ -181,13 +181,13 @@ export function DataTable<TData, TValue>({
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
-                  data-state={row.getIsSelected() && 'selected'}
+                  data-state={row.getIsSelected() && "selected"}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </TableCell>
                   ))}
@@ -231,16 +231,16 @@ export function DataTable<TData, TValue>({
         </div>
 
         <div className="text-sm text-muted-foreground">
-          Showing{' '}
+          Showing{" "}
           {table.getState().pagination.pageIndex *
             table.getState().pagination.pageSize +
-            1}{' '}
-          to{' '}
+            1}{" "}
+          to{" "}
           {Math.min(
             (table.getState().pagination.pageIndex + 1) *
               table.getState().pagination.pageSize,
-            table.getFilteredRowModel().rows.length
-          )}{' '}
+            table.getFilteredRowModel().rows.length,
+          )}{" "}
           of {table.getFilteredRowModel().rows.length}
         </div>
 

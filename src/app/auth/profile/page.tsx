@@ -1,14 +1,14 @@
 // pages/home/admin/register-info.tsx
 
-'use client';
+"use client";
 
-import React from 'react';
-import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import React from "react";
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Form,
   FormControl,
@@ -16,7 +16,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
+} from "@/components/ui/form";
 import {
   Select,
   SelectContent,
@@ -24,24 +24,24 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Card } from '@/components/ui/card'; // Importe o componente Card
+} from "@/components/ui/select";
+import { Card } from "@/components/ui/card"; // Importe o componente Card
 
 // Update the schema to match ProfileUser model
 const registerInfoSchema = z.object({
   fullName: z
     .string()
-    .min(2, 'O nome completo deve ter pelo menos 2 caracteres.'),
-  nickname: z.string().min(2, 'O apelido deve ter pelo menos 2 caracteres.'),
-  birthDay: z.number().min(1, 'Selecione o dia.'),
-  birthMonth: z.number().min(1, 'Selecione o mês.'),
+    .min(2, "O nome completo deve ter pelo menos 2 caracteres."),
+  nickname: z.string().min(2, "O apelido deve ter pelo menos 2 caracteres."),
+  birthDay: z.number().min(1, "Selecione o dia."),
+  birthMonth: z.number().min(1, "Selecione o mês."),
   birthYear: z
     .number()
-    .min(1900, 'Ano inválido.')
-    .max(new Date().getFullYear(), 'Ano inválido.'),
-  pixKey: z.string().min(1, 'A chave PIX é obrigatória.'),
-  whatsapp: z.string().min(1, 'O número do WhatsApp é obrigatório.'),
-  email: z.string().email('Endereço de e-mail inválido.'),
+    .min(1900, "Ano inválido.")
+    .max(new Date().getFullYear(), "Ano inválido."),
+  pixKey: z.string().min(1, "A chave PIX é obrigatória."),
+  whatsapp: z.string().min(1, "O número do WhatsApp é obrigatório."),
+  email: z.string().email("Endereço de e-mail inválido."),
 });
 
 type RegisterInfoFormValues = z.infer<typeof registerInfoSchema>;
@@ -53,26 +53,26 @@ export default function RegisterInfoPage() {
   const registerInfoForm = useForm<RegisterInfoFormValues>({
     resolver: zodResolver(registerInfoSchema),
     defaultValues: {
-      fullName: '',
-      nickname: '',
+      fullName: "",
+      nickname: "",
       birthDay: 1,
       birthMonth: 1,
       birthYear: 2000,
-      pixKey: '',
-      whatsapp: '',
-      email: '',
+      pixKey: "",
+      whatsapp: "",
+      email: "",
     },
   });
 
   // Update the handleRegisterInfo function
   const handleRegisterInfo = async (values: RegisterInfoFormValues) => {
     try {
-      const token = localStorage.getItem('token');
-      const storedRole = localStorage.getItem('role');
+      const token = localStorage.getItem("token");
+      const storedRole = localStorage.getItem("role");
 
       if (!token) {
-        registerInfoForm.setError('root', {
-          message: 'Token não encontrado. Por favor, faça login novamente.',
+        registerInfoForm.setError("root", {
+          message: "Token não encontrado. Por favor, faça login novamente.",
         });
         return;
       }
@@ -89,10 +89,10 @@ export default function RegisterInfoPage() {
         email: values.email,
       };
 
-      const response = await fetch('/api/home/admin/register-info', {
-        method: 'POST',
+      const response = await fetch("/api/home/admin/register-info", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(payload),
@@ -102,19 +102,19 @@ export default function RegisterInfoPage() {
 
       if (response.ok) {
         // Update localStorage after successful profile registration
-        localStorage.setItem('hasProfile', 'true');
-        localStorage.setItem('userProfile', JSON.stringify(payload));
+        localStorage.setItem("hasProfile", "true");
+        localStorage.setItem("userProfile", JSON.stringify(payload));
 
         // Redirect based on role
-        router.push(storedRole === 'admin' ? '/admin' : '/home');
+        router.push(storedRole === "admin" ? "/admin" : "/home");
       } else {
-        registerInfoForm.setError('root', { message: data.error });
+        registerInfoForm.setError("root", { message: data.error });
       }
     } catch (error) {
-      console.error('Erro ao registrar informações de perfil:', error);
-      registerInfoForm.setError('root', {
+      console.error("Erro ao registrar informações de perfil:", error);
+      registerInfoForm.setError("root", {
         message:
-          'Erro ao registrar informações de perfil. Por favor, tente novamente.',
+          "Erro ao registrar informações de perfil. Por favor, tente novamente.",
       });
     }
   };
@@ -210,10 +210,10 @@ export default function RegisterInfoPage() {
                           <SelectGroup>
                             {[...Array(12)].map((_, i) => {
                               const month = new Date(0, i).toLocaleString(
-                                'default',
+                                "default",
                                 {
-                                  month: 'long',
-                                }
+                                  month: "long",
+                                },
                               );
                               return (
                                 <SelectItem
@@ -252,7 +252,7 @@ export default function RegisterInfoPage() {
                           <SelectGroup>
                             {Array.from(
                               { length: new Date().getFullYear() - 1900 + 1 },
-                              (_, i) => 1900 + i
+                              (_, i) => 1900 + i,
                             )
                               .reverse()
                               .map((year) => (

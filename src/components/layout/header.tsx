@@ -1,7 +1,7 @@
-import * as React from 'react';
-import Link from 'next/link';
-import { cn } from '@/lib/utils';
-import { siteConfig } from '@/config/site';
+import * as React from "react";
+import Link from "next/link";
+import { cn } from "@/lib/utils";
+import { siteConfig } from "@/config/site";
 
 export function Header() {
   return (
@@ -17,8 +17,8 @@ export function Header() {
                 key={index}
                 href={item.href}
                 className={cn(
-                  'flex items-center text-sm font-medium text-muted-foreground',
-                  item.href.startsWith(`/`) && 'text-foreground'
+                  "flex items-center text-sm font-medium text-muted-foreground",
+                  item.href.startsWith(`/`) && "text-foreground",
                 )}
               >
                 {item.title}

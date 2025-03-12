@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { usePathname } from 'next/navigation';
-import { SidebarProvider, SidebarTrigger } from '@/components/ui';
-import { AppSidebar } from '@/components/ui/app-sidebar';
+import { usePathname } from "next/navigation";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui";
+import { AppSidebar } from "@/components/ui/app-sidebar";
 
 export default function ClientLayout({
   children,
@@ -11,9 +11,9 @@ export default function ClientLayout({
 }) {
   const pathname = usePathname();
   const isAuthPage = [
-    '/auth/login',
-    '/auth/password',
-    '/auth/profile',
+    "/auth/login",
+    "/auth/password",
+    "/auth/profile",
   ].includes(pathname);
 
   return (

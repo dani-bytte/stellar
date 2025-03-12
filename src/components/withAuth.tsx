@@ -1,10 +1,10 @@
 // components/withAuth.tsx
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import type { NextRouter } from 'next/router';
-import type { UseFormReturn } from 'react-hook-form';
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import type { NextRouter } from "next/router";
+import type { UseFormReturn } from "react-hook-form";
 
 interface WithAuthProps {
   requiredRole?: string;
@@ -12,7 +12,7 @@ interface WithAuthProps {
 
 const withAuth = <P extends object>(
   WrappedComponent: React.ComponentType<P>,
-  { requiredRole }: WithAuthProps
+  { requiredRole }: WithAuthProps,
 ) => {
   const ComponentWithAuth = (props: P) => {
     const router = useRouter();
@@ -21,11 +21,11 @@ const withAuth = <P extends object>(
 
     useEffect(() => {
       const checkAuth = async () => {
-        const token = localStorage.getItem('token');
-        const role = localStorage.getItem('role');
+        const token = localStorage.getItem("token");
+        const role = localStorage.getItem("role");
 
         if (!token || (requiredRole && role !== requiredRole)) {
-          router.push('/login');
+          router.push("/login");
         } else {
           setIsAuthenticated(true);
         }
@@ -66,12 +66,12 @@ interface LoginResponse {
 const handleLogin = async (
   values: LoginFormValues,
   form: UseFormReturn<LoginFormValues>,
-  router: NextRouter
+  router: NextRouter,
 ) => {
   try {
-    const response = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    const response = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(values),
     });
 
@@ -79,29 +79,29 @@ const handleLogin = async (
 
     if (response.ok) {
       // Armazenar todos os dados necessários
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('role', data.role);
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("role", data.role);
       localStorage.setItem(
-        'isTemporaryPassword',
-        data.isTemporaryPassword.toString()
+        "isTemporaryPassword",
+        data.isTemporaryPassword.toString(),
       );
-      localStorage.setItem('hasProfile', data.hasProfile.toString());
+      localStorage.setItem("hasProfile", data.hasProfile.toString());
 
       // Redirecionar baseado no estado do usuário
       if (data.isTemporaryPassword) {
-        router.push('/auth/password');
+        router.push("/auth/password");
       } else if (!data.hasProfile) {
-        router.push('/auth/profile');
+        router.push("/auth/profile");
       } else {
-        router.push(data.role === 'admin' ? '/admin' : '/home');
+        router.push(data.role === "admin" ? "/admin" : "/home");
       }
     } else {
-      form.setError('root', { message: data.error });
+      form.setError("root", { message: data.error });
     }
   } catch (error) {
-    console.error('Erro ao fazer login:', error);
-    form.setError('root', {
-      message: 'Erro ao fazer login. Por favor, tente novamente.',
+    console.error("Erro ao fazer login:", error);
+    form.setError("root", {
+      message: "Erro ao fazer login. Por favor, tente novamente.",
     });
   }
 };

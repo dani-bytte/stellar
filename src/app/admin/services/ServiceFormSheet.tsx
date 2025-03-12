@@ -1,5 +1,5 @@
 // components/ServiceFormSheet.tsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import {
   Sheet,
   SheetContent,
@@ -7,16 +7,16 @@ import {
   SheetTitle,
   SheetFooter,
   SheetDescription,
-} from '@/components/ui/sheet';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+} from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 
 interface Category {
   _id: string;
@@ -32,9 +32,9 @@ interface ServiceFormSheetProps {
 // Add helper function for name capitalization
 const capitalizeWords = (str: string) => {
   return str
-    .split(' ')
+    .split(" ")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(' ');
+    .join(" ");
 };
 
 // Add predefined duration days
@@ -50,10 +50,10 @@ export function ServiceFormSheet({
   const [categories, setCategories] = useState<Category[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
-    name: '',
-    categoryId: '',
-    dueDate: '1', // Default to 1 day
-    value: '',
+    name: "",
+    categoryId: "",
+    dueDate: "1", // Default to 1 day
+    value: "",
   });
 
   useEffect(() => {
@@ -61,32 +61,32 @@ export function ServiceFormSheet({
       try {
         setLoadingCategories(true);
         setError(null);
-        const token = localStorage.getItem('token');
-        if (!token) throw new Error('No token found');
+        const token = localStorage.getItem("token");
+        if (!token) throw new Error("No token found");
 
-        const response = await fetch('/api/tickets/categories/list', {
+        const response = await fetch("/api/tickets/categories/list", {
           headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
         });
 
         if (!response.ok) {
-          throw new Error('Failed to fetch categories');
+          throw new Error("Failed to fetch categories");
         }
 
         const data = await response.json();
 
         // Ensure data is an array
         if (!Array.isArray(data)) {
-          throw new Error('Invalid categories data format');
+          throw new Error("Invalid categories data format");
         }
 
         setCategories(data);
       } catch (error) {
-        console.error('Error loading categories:', error);
+        console.error("Error loading categories:", error);
         setError(
-          error instanceof Error ? error.message : 'Failed to load categories'
+          error instanceof Error ? error.message : "Failed to load categories",
         );
         setCategories([]); // Reset to empty array on error
       } finally {
@@ -105,13 +105,13 @@ export function ServiceFormSheet({
     setError(null);
 
     try {
-      const token = localStorage.getItem('token');
-      if (!token) throw new Error('No token found');
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("No token found");
 
-      const response = await fetch('/api/services/new', {
-        method: 'POST',
+      const response = await fetch("/api/services/new", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
@@ -123,21 +123,21 @@ export function ServiceFormSheet({
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.message || 'Failed to create service');
+        throw new Error(errorData?.message || "Failed to create service");
       }
 
       setFormData({
-        name: '',
-        categoryId: '',
-        dueDate: '1', // Default to 1 day
-        value: '',
+        name: "",
+        categoryId: "",
+        dueDate: "1", // Default to 1 day
+        value: "",
       });
       onSuccess();
       onOpenChange(false);
     } catch (error) {
-      console.error('Error creating service:', error);
+      console.error("Error creating service:", error);
       setError(
-        error instanceof Error ? error.message : 'Failed to create service'
+        error instanceof Error ? error.message : "Failed to create service",
       );
     } finally {
       setLoading(false);
@@ -187,8 +187,8 @@ export function ServiceFormSheet({
                 <SelectValue
                   placeholder={
                     loadingCategories
-                      ? 'Loading categories...'
-                      : 'Select category'
+                      ? "Loading categories..."
+                      : "Select category"
                   }
                 />
               </SelectTrigger>
@@ -229,7 +229,7 @@ export function ServiceFormSheet({
               <SelectContent>
                 {durationOptions.map((days) => (
                   <SelectItem key={days} value={days.toString()}>
-                    {days} {days === 1 ? 'day' : 'days'}
+                    {days} {days === 1 ? "day" : "days"}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -266,7 +266,7 @@ export function ServiceFormSheet({
           </div>
           <SheetFooter>
             <Button type="submit" disabled={loading}>
-              {loading ? 'Creating...' : 'Create Service'}
+              {loading ? "Creating..." : "Create Service"}
             </Button>
           </SheetFooter>
         </form>

@@ -1,24 +1,24 @@
-'use client';
+"use client";
 
-import * as React from 'react';
+import * as React from "react";
 import {
   Bot,
   GalleryVerticalEnd,
   Settings2,
   SquareTerminal,
-} from 'lucide-react';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-import { NavMain } from '@/components/nav-main';
-import { NavUser } from '@/components/nav-user';
-import { TeamSwitcher } from '@/components/team-switcher';
+} from "lucide-react";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { NavMain } from "@/components/nav-main";
+import { NavUser } from "@/components/nav-user";
+import { TeamSwitcher } from "@/components/team-switcher";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
-} from '@/components/ui/sidebar';
-import { useRouter } from 'next/navigation';
+} from "@/components/ui/sidebar";
+import { useRouter } from "next/navigation";
 
 interface User {
   fullName: string;
@@ -27,7 +27,7 @@ interface User {
   role: string;
 }
 
-import { LucideIcon } from 'lucide-react';
+import { LucideIcon } from "lucide-react";
 
 interface MenuItem {
   title: string;
@@ -54,37 +54,37 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       try {
         if (!mounted.current) return;
 
-        const token = localStorage.getItem('token');
-        const storedRole = localStorage.getItem('role');
-        const hasProfile = localStorage.getItem('hasProfile') === 'true';
+        const token = localStorage.getItem("token");
+        const storedRole = localStorage.getItem("role");
+        const hasProfile = localStorage.getItem("hasProfile") === "true";
         const isTemporaryPassword =
-          localStorage.getItem('isTemporaryPassword') === 'true';
+          localStorage.getItem("isTemporaryPassword") === "true";
 
         if (!token || !storedRole) {
-          router.push('/auth/login');
+          router.push("/auth/login");
           return;
         }
 
         // Check mandatory steps first
         if (isTemporaryPassword) {
-          router.push('/auth/password');
+          router.push("/auth/password");
           return;
         }
 
         if (!hasProfile) {
-          router.push('/auth/profile');
+          router.push("/auth/profile");
           return;
         }
 
         // Only fetch profile if all checks pass
-        const response = await fetch('/api/home/profile', {
+        const response = await fetch("/api/home/profile", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
 
         if (!response.ok) {
-          throw new Error('Erro ao obter informações do perfil');
+          throw new Error("Erro ao obter informações do perfil");
         }
 
         const profileData = await response.json();
@@ -97,10 +97,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           });
         }
       } catch (error) {
-        console.error('Erro:', error);
+        console.error("Erro:", error);
         if (mounted.current) {
           setError(
-            error instanceof Error ? error.message : 'Erro desconhecido'
+            error instanceof Error ? error.message : "Erro desconhecido",
           );
         }
       } finally {
@@ -123,59 +123,59 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
       const baseItems: MenuItem[] = [
         {
-          title: 'Tickets',
-          url: '#',
+          title: "Tickets",
+          url: "#",
           icon: SquareTerminal,
           isActive: true,
           items: [
             {
-              title: 'History',
-              url: '/home/ticket',
+              title: "History",
+              url: "/home/ticket",
             },
           ],
         },
         {
-          title: 'Settings',
-          url: '#',
+          title: "Settings",
+          url: "#",
           icon: Settings2,
           items: [
             {
-              title: 'General',
-              url: '/settings',
+              title: "General",
+              url: "/settings",
             },
             {
-              title: 'Team',
-              url: '/settings/team',
+              title: "Team",
+              url: "/settings/team",
             },
           ],
         },
       ];
 
-      if (user.role === 'admin') {
+      if (user.role === "admin") {
         baseItems.splice(1, 0, {
-          title: 'Admin',
-          url: '#',
+          title: "Admin",
+          url: "#",
           icon: Bot,
           items: [
             {
-              title: 'Painel',
-              url: '/admin',
+              title: "Painel",
+              url: "/admin",
             },
             {
-              title: 'Users',
-              url: '/admin/users',
+              title: "Users",
+              url: "/admin/users",
             },
             {
-              title: 'Services',
-              url: '/admin/services',
+              title: "Services",
+              url: "/admin/services",
             },
             {
-              title: 'Descontos',
-              url: '/admin/discounts',
+              title: "Descontos",
+              url: "/admin/discounts",
             },
             {
-              title: 'Pagamentos',
-              url: '/admin/payment',
+              title: "Pagamentos",
+              url: "/admin/payment",
             },
           ],
         });
@@ -183,7 +183,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
       return baseItems;
     },
-    []
+    [],
   );
 
   if (isLoading) return <div>Carregando...</div>;
@@ -194,13 +194,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     user: {
       name: user.fullName,
       email: user.email,
-      avatar: user.avatar || '',
+      avatar: user.avatar || "",
     },
     teams: [
       {
-        name: 'Stellar',
+        name: "Stellar",
         logo: GalleryVerticalEnd,
-        plan: 'Enterprise',
+        plan: "Enterprise",
       },
     ],
     navMain: getNavigationItems(user),

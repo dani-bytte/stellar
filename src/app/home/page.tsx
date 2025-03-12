@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import * as React from 'react';
-import { useEffect, useState, useRef } from 'react';
+import * as React from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   Chart,
   BarController,
@@ -11,16 +11,16 @@ import {
   Title,
   Tooltip,
   Legend,
-} from 'chart.js';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+} from "chart.js";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui';
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui";
 
 Chart.register(
   BarController,
@@ -29,7 +29,7 @@ Chart.register(
   LinearScale,
   Title,
   Tooltip,
-  Legend
+  Legend,
 );
 
 const HomePage: React.FC = () => {
@@ -61,41 +61,41 @@ const HomePage: React.FC = () => {
       }
 
       const ctx = document.getElementById(
-        'myTicketsChart'
+        "myTicketsChart",
       ) as HTMLCanvasElement;
       if (ctx) {
         ticketChartRef.current = new Chart(ctx, {
-          type: 'bar',
+          type: "bar",
           data: {
             labels: [
-              'Jan',
-              'Fev',
-              'Mar',
-              'Abr',
-              'Mai',
-              'Jun',
-              'Jul',
-              'Ago',
-              'Set',
-              'Out',
-              'Nov',
-              'Dez',
+              "Jan",
+              "Fev",
+              "Mar",
+              "Abr",
+              "Mai",
+              "Jun",
+              "Jul",
+              "Ago",
+              "Set",
+              "Out",
+              "Nov",
+              "Dez",
             ],
             datasets: [
               {
-                label: 'Meus Tickets',
+                label: "Meus Tickets",
                 data: myTicketsByMonth,
-                backgroundColor: '#4F46E5',
+                backgroundColor: "#4F46E5",
               },
             ],
           },
           options: {
             responsive: true,
             plugins: {
-              legend: { position: 'top' },
+              legend: { position: "top" },
               title: {
                 display: true,
-                text: 'Meus Tickets por Mês',
+                text: "Meus Tickets por Mês",
               },
             },
           },
@@ -106,20 +106,20 @@ const HomePage: React.FC = () => {
 
   const fetchUserDashboardData = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       if (!token) {
-        console.error('Token não encontrado');
+        console.error("Token não encontrado");
         return;
       }
 
-      const response = await fetch('/api/home/user-dashboard', {
+      const response = await fetch("/api/home/user-dashboard", {
         headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       });
 
-      if (!response.ok) throw new Error('Falha ao buscar dados');
+      if (!response.ok) throw new Error("Falha ao buscar dados");
 
       const data = await response.json();
       setMyActiveTickets(data.totalTickets);
@@ -129,30 +129,30 @@ const HomePage: React.FC = () => {
       setMyTodayTickets(data.todayTickets);
       setMyTicketsByMonth(data.ticketsByMonth);
     } catch (error) {
-      console.error('Erro:', error);
+      console.error("Erro:", error);
     }
   };
 
   const handleCardClick = async (cardType: string) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       if (!token) return;
 
       const endpoint = `/api/home/${cardType}`;
       const response = await fetch(endpoint, {
         headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       });
 
-      if (!response.ok) throw new Error('Erro ao buscar dados');
+      if (!response.ok) throw new Error("Erro ao buscar dados");
 
       const data = await response.json();
       setSelectedCardData(data);
       setOpenDialog(true);
     } catch (error) {
-      console.error('Erro:', error);
+      console.error("Erro:", error);
     }
   };
 
@@ -193,7 +193,7 @@ const HomePage: React.FC = () => {
 
           <Card
             className="text-center cursor-pointer"
-            onClick={() => handleCardClick('dueTickets')}
+            onClick={() => handleCardClick("dueTickets")}
           >
             <CardHeader>
               <CardTitle>Vencidos</CardTitle>
@@ -205,7 +205,7 @@ const HomePage: React.FC = () => {
 
           <Card
             className="text-center cursor-pointer"
-            onClick={() => handleCardClick('todayTickets')}
+            onClick={() => handleCardClick("todayTickets")}
           >
             <CardHeader>
               <CardTitle>Vence Hoje</CardTitle>
@@ -237,10 +237,10 @@ const HomePage: React.FC = () => {
                   </Label>
                   <Label>
                     <p>
-                      <strong>Vencimento:</strong>{' '}
+                      <strong>Vencimento:</strong>{" "}
                       {item.endDate
                         ? new Date(item.endDate).toLocaleDateString()
-                        : 'N/A'}
+                        : "N/A"}
                     </p>
                   </Label>
                 </div>

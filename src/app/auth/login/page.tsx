@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Form,
   FormControl,
@@ -14,63 +14,63 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Card, CardHeader, CardContent } from '@/components/ui/card';
-import { toast } from 'sonner';
-import { Toaster } from '@/components/ui/sonner';
+} from "@/components/ui/form";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import { toast } from "sonner";
+import { Toaster } from "@/components/ui/sonner";
 
 // Schema de Validação para Login
 const loginSchema = z.object({
-  username: z.string().min(1, 'Username é obrigatório'),
-  password: z.string().min(1, 'Senha é obrigatória'),
+  username: z.string().min(1, "Username é obrigatório"),
+  password: z.string().min(1, "Senha é obrigatória"),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 const LoginPage = () => {
   const router = useRouter();
-  const [, setUsername] = useState('');
+  const [, setUsername] = useState("");
 
   // Configuração do React Hook Form para Login
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      username: '',
-      password: '',
+      username: "",
+      password: "",
     },
   });
 
   const handleLogin = async (values: LoginFormValues) => {
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('role', data.role);
-        localStorage.setItem('hasProfile', String(data.hasProfile));
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("role", data.role);
+        localStorage.setItem("hasProfile", String(data.hasProfile));
         localStorage.setItem(
-          'isTemporaryPassword',
-          String(data.isTemporaryPassword)
+          "isTemporaryPassword",
+          String(data.isTemporaryPassword),
         );
 
         console.log(data);
 
-        const redirectUrl = data.role === 'admin' ? '/admin' : '/home';
+        const redirectUrl = data.role === "admin" ? "/admin" : "/home";
         router.push(redirectUrl);
       } else {
         toast.error(data.error);
-        loginForm.setError('root', { message: data.error });
+        loginForm.setError("root", { message: data.error });
       }
     } catch (error) {
-      const errorMessage = 'Erro ao fazer login. Por favor, tente novamente.';
+      const errorMessage = "Erro ao fazer login. Por favor, tente novamente.";
       toast.error(errorMessage);
-      loginForm.setError('root', { message: errorMessage });
+      loginForm.setError("root", { message: errorMessage });
     }
   };
 

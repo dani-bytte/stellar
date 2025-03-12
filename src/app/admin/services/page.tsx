@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import * as React from 'react';
-import withAuth from '@/components/withAuth';
-import ServiceTable from './newservice';
+import * as React from "react";
+import withAuth from "@/components/withAuth";
+import ServiceTable from "./newservice";
 
 const ServicesPage = () => {
   const [data, setData] = React.useState([]);
@@ -10,19 +10,19 @@ const ServicesPage = () => {
 
   const fetchServices = async () => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) throw new Error('No token found');
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("No token found");
 
-      const response = await fetch('/api/tickets/services/list', {
+      const response = await fetch("/api/tickets/services/list", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      if (!response.ok) throw new Error('Failed to fetch services');
+      if (!response.ok) throw new Error("Failed to fetch services");
       const services = await response.json();
       setData(services);
     } catch (error) {
-      console.error('Error fetching services:', error);
+      console.error("Error fetching services:", error);
     } finally {
       setIsLoading(false);
     }
@@ -48,4 +48,4 @@ const ServicesPage = () => {
   );
 };
 
-export default withAuth(ServicesPage, { requiredRole: 'admin' });
+export default withAuth(ServicesPage, { requiredRole: "admin" });
