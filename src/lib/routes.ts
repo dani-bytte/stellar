@@ -51,10 +51,13 @@ export const API_ROUTES = {
   },
   TICKETS: {
     NEW: "/api/tickets/new",
-    LIST: "/api/tickets",
+    LIST: "/api/tickets/list",
     HIDE: (id: string) => `/api/tickets/${id}/hide`,
     PROOF_IMAGE: (filename: string) => `/api/tickets/proof-image/${encodeURIComponent(filename)}`,
     TRANSFER_REQUEST: "/api/tickets/transfer/request",
+    CATEGORIES: {
+      LIST: "/api/tickets/categories/list",
+    },
     SERVICES: {
       LIST: "/api/tickets/services/list",
     },
@@ -82,6 +85,12 @@ export const API_ROUTES = {
     DASHBOARD: "/api/home/user-dashboard",
     DUE_TICKETS: "/api/home/dueTickets",
     TODAY_TICKETS: "/api/home/todayTickets",
+  },
+  SERVICES: {
+    NEW: "/api/services/new",
+    LIST: "/api/services/list",
+    UPDATE: (id: string) => `/api/services/${id}`,
+    DELETE: (id: string) => `/api/services/${id}/delete`,
   },
 };
 

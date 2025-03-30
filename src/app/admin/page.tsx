@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui";
 import { Separator } from "@radix-ui/react-dropdown-menu";
+import { API_ENDPOINTS } from "@/lib/constants";
 
 // Registrar os componentes do Chart.js
 Chart.register(
@@ -134,7 +135,7 @@ const Admin = () => {
       if (!token) return;
 
       // Fetch ticket count data
-      const ticketCountResponse = await fetch("/api/home/admin/ticketscount", {
+      const ticketCountResponse = await fetch(API_ENDPOINTS.ADMIN.TICKETS.COUNT, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -146,7 +147,7 @@ const Admin = () => {
       setUserTicketDistribution(ticketCountData as UserTicket[]);
 
       // Fetch dashboard data
-      const dashboardResponse = await fetch("/api/home/admin/dashboard-data", {
+      const dashboardResponse = await fetch(API_ENDPOINTS.ADMIN.DASHBOARD, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -182,13 +183,13 @@ const Admin = () => {
       let endpoint = "";
       switch (cardType) {
         case "dueTickets":
-          endpoint = "/api/home/admin/overdue-tickets";
+          endpoint = API_ENDPOINTS.ADMIN.TICKETS.OVERDUE;
           break;
         case "todayTickets":
-          endpoint = "/api/home/admin/today-tickets";
+          endpoint = API_ENDPOINTS.ADMIN.TICKETS.TODAY;
           break;
         case "upcomingTickets":
-          endpoint = "/api/home/admin/upcoming-tickets";
+          endpoint = API_ENDPOINTS.ADMIN.TICKETS.UPCOMING;
           break;
         default:
           return;

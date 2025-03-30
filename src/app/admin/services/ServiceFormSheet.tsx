@@ -1,22 +1,11 @@
 // components/ServiceFormSheet.tsx
 import { useState, useEffect } from "react";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetFooter,
-  SheetDescription,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { API_ENDPOINTS, LOCAL_STORAGE_KEYS } from "@/lib/constants";
+import { fetchWithErrorHandling } from "@/utils/errorHandling";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface Category {
   _id: string;
@@ -58,45 +47,34 @@ export function ServiceFormSheet({
 
   useEffect(() => {
     const fetchCategories = async () => {
+      if (!open) return;
+      
       try {
         setLoadingCategories(true);
         setError(null);
-        const token = localStorage.getItem("token");
-        if (!token) throw new Error("No token found");
-
-        const response = await fetch("/api/tickets/categories/list", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch categories");
-        }
-
-        const data = await response.json();
-
-        // Ensure data is an array
-        if (!Array.isArray(data)) {
-          throw new Error("Invalid categories data format");
-        }
-
-        setCategories(data);
-      } catch (error) {
-        console.error("Error loading categories:", error);
-        setError(
-          error instanceof Error ? error.message : "Failed to load categories",
+        
+        // Usando o fetchWithErrorHandling para tratamento consistente de erros
+        const categoriesData = await fetchWithErrorHandling<Category[]>(
+          API_ENDPOINTS.TICKETS.CATEGORIES.LIST,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN)}`,
+              "Content-Type": "application/json",
+            },
+          }
         );
-        setCategories([]); // Reset to empty array on error
+        
+        setCategories(categoriesData);
+      } catch (error) {
+        // Aqui o erro já foi tratado com toast pela nossa função
+        setError(error instanceof Error ? error.message : "Failed to load categories");
+        setCategories([]);
       } finally {
         setLoadingCategories(false);
       }
     };
 
-    if (open) {
-      fetchCategories();
-    }
+    fetchCategories();
   }, [open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -105,26 +83,22 @@ export function ServiceFormSheet({
     setError(null);
 
     try {
-      const token = localStorage.getItem("token");
-      if (!token) throw new Error("No token found");
-
-      const response = await fetch("/api/services/new", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          ...formData,
-          dueDate: Number(formData.dueDate),
-          value: Number(formData.value),
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.message || "Failed to create service");
-      }
+      // Usando o fetchWithErrorHandling para tratamento consistente de erros
+      await fetchWithErrorHandling(
+        API_ENDPOINTS.SERVICES.NEW,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN)}`,
+          },
+          body: JSON.stringify({
+            ...formData,
+            dueDate: Number(formData.dueDate),
+            value: Number(formData.value),
+          }),
+        }
+      );
 
       setFormData({
         name: "",
@@ -135,10 +109,8 @@ export function ServiceFormSheet({
       onSuccess();
       onOpenChange(false);
     } catch (error) {
-      console.error("Error creating service:", error);
-      setError(
-        error instanceof Error ? error.message : "Failed to create service",
-      );
+      // O erro já foi tratado pelo fetchWithErrorHandling
+      setError(error instanceof Error ? error.message : "Failed to create service");
     } finally {
       setLoading(false);
     }

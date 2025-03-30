@@ -5,6 +5,7 @@ import withAuth from "@/components/withAuth";
 import PaymentTable from "./payments";
 import { authenticatedFetch } from "@/utils/authUtils";
 import { toast } from "sonner";
+import { API_ENDPOINTS } from "@/lib/constants";
 
 interface Payment {
   _id: string;
@@ -28,19 +29,8 @@ const PaymentsPage = () => {
     try {
       setIsLoading(true);
       
-      // Corrigir a referência à rota da API para pagamentos
-      const response = await authenticatedFetch("/api/home/admin/payments/list", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const paymentData = await response.json();
+      // authenticatedFetch already returns the parsed JSON data when successful
+      const paymentData = await authenticatedFetch<Payment[]>(API_ENDPOINTS.ADMIN.PAYMENTS.LIST);
       console.log("Fetched payments:", paymentData); // Debug log
       setPayments(paymentData);
     } catch (error) {

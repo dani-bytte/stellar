@@ -24,6 +24,7 @@ import { Alert } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { AlertTitle, AlertDescription } from "@/components/ui/alert";
 import withAuth from "@/components/withAuth";
+import { API_ENDPOINTS, LOCAL_STORAGE_KEYS } from "@/lib/constants";
 
 interface UserProfile {
   fullName: string;
@@ -68,10 +69,10 @@ const ProfilePage = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const token = localStorage.getItem("token");
+        const token = localStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN);
         if (!token) throw new Error("No token found");
 
-        const response = await fetch("/api/home/profile", {
+        const response = await fetch(API_ENDPOINTS.PROFILE.GET, {
           headers: {
             Authorization: `Bearer ${token}`,
           },

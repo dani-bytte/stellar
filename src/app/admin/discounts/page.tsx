@@ -1,28 +1,35 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import * as React from "react";
 import withAuth from "@/components/withAuth";
-import DiscountTable from "./discounttable"; // You'll need to create this component
+import DiscountTable from "./discounttable";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { API_ENDPOINTS, LOCAL_STORAGE_KEYS } from "@/lib/constants";
+import { authenticatedFetch } from "@/utils/authUtils";
+
+interface Discount {
+  _id: string;
+  cargo: string;
+  desconto: number;
+  visivel: boolean;
+}
 
 const DiscountsPage = () => {
-  const [discounts, setDiscounts] = React.useState([]);
+  const [discounts, setDiscounts] = React.useState<Discount[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
 
   const fetchDiscounts = async () => {
+    setIsLoading(true);
     try {
-      const token = localStorage.getItem("token");
-      if (!token) throw new Error("No token found");
-
-      const response = await fetch("/api/tickets/discounts/list", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (!response.ok) throw new Error("Failed to fetch discounts");
-      const discountData = await response.json();
+      // Usando nosso novo utility para requisições autenticadas
+      // Observe como o código ficou mais limpo e simples
+      const discountData = await authenticatedFetch<Discount[]>(API_ENDPOINTS.TICKETS.DISCOUNTS.LIST);
       setDiscounts(discountData);
-    } catch (error) {
-      console.error("Error fetching discounts:", error);
+    } catch (_) { // Usando underscore para indicar parâmetro não utilizado
+      // Erro já tratado pelo authenticatedFetch/fetchWithErrorHandling
+      toast.error("Falha ao carregar os descontos");
     } finally {
       setIsLoading(false);
     }

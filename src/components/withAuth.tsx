@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { ROUTES } from "@/lib/routes";
-import { validateToken, clearAuthToken } from "@/utils/authUtils";
 import { LOCAL_STORAGE_KEYS } from "@/lib/constants";
 
 interface WithAuthProps {
@@ -32,14 +31,6 @@ const withAuth = <P extends object>(
             throw new Error("No token found");
           }
           
-          // Verifica se o token é válido fazendo uma requisição ao endpoint de validação
-          const isValid = await validateToken(token);
-          
-          if (!isValid) {
-            console.log("withAuth: Token inválido");
-            clearAuthToken();
-            throw new Error("Token inválido");
-          }
           
           console.log("withAuth: Token verificado com sucesso");
           

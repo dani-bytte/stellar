@@ -18,7 +18,8 @@ import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import { setAuthToken } from "@/utils/authUtils";
-import { ROUTES } from "@/lib/routes";
+import { ROUTES, API_ROUTES } from "@/lib/routes";
+import { LOCAL_STORAGE_KEYS } from "@/lib/constants";
 
 // Schema de Validação para Login
 const loginSchema = z.object({
@@ -47,7 +48,7 @@ const LoginPage = () => {
 
     try {
       console.log("Login: Enviando requisição de login");
-      const response = await fetch("/api/auth/login", {
+      const response = await fetch(API_ROUTES.AUTH.LOGIN, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values)
@@ -61,9 +62,9 @@ const LoginPage = () => {
         setAuthToken(data.token);
         
         // Armazenar outros dados do usuário conforme a resposta da API
-        localStorage.setItem("role", data.role);
-        localStorage.setItem("hasProfile", String(data.hasProfile));
-        localStorage.setItem("isTemporaryPassword", String(data.isTemporaryPassword));
+        localStorage.setItem(LOCAL_STORAGE_KEYS.ROLE, data.role);
+        localStorage.setItem(LOCAL_STORAGE_KEYS.HAS_PROFILE, String(data.hasProfile));
+        localStorage.setItem(LOCAL_STORAGE_KEYS.IS_TEMPORARY_PASSWORD, String(data.isTemporaryPassword));
 
         toast.success("Login realizado com sucesso");
         console.log("Login bem-sucedido. Token salvo.");

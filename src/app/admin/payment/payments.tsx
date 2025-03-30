@@ -3,14 +3,6 @@
 import * as React from "react";
 import { toast } from "sonner";
 import { authenticatedFetch } from "@/utils/authUtils";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -27,27 +19,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
-import Image from "next/image";
-import { Eye, Check } from "lucide-react"; // For view icon
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Eye, Check } from "lucide-react";
+import Image from "next/image";
 import { API_ENDPOINTS } from "@/lib/constants";
+import { DataTable } from "@/components/ui/data-table";
+import { ColumnDef } from "@tanstack/react-table";
 
 interface Payment {
-  _id: string;
   ticketNumber: string;
   userName: string;
   finalValue: number;
-  discountApplied: string;
-  repasse: string;
-  proofUrl: string;
+  discountApplied: string;  // Por exemplo: "10%"
+  repasse: string;          // Por exemplo: "5%" ou "N/A"
+  proofUrl: string;  // URL para a imagem de comprovante ou null se não foi fornecida
 }
 
 interface Discount {
@@ -81,34 +67,35 @@ const PaymentTable: React.FC<PaymentTableProps> = ({
   const [selectedDiscount, setSelectedDiscount] =
     React.useState<string>("no-discount");
   const [discounts, setDiscounts] = React.useState<Discount[]>([]);
-  const [pageSize, setPageSize] = React.useState(10);
-  const [currentPage, setCurrentPage] = React.useState(1);
-  const [userFilter, setUserFilter] = React.useState("all");
   const [totalValue, setTotalValue] = React.useState(0);
   const [proofDialogOpen, setProofDialogOpen] = React.useState(false);
   const [selectedProofUrl, setSelectedProofUrl] = React.useState<string | null>(
     null,
   );
   const [calculatedValue, setCalculatedValue] = React.useState<number>(0);
+  const [searchValue, setSearchValue] = React.useState<string>("");
 
   const fetchDiscounts = async () => {
     try {
-      // Usar API_ENDPOINTS ao invés da rota hardcoded
-      const response = await authenticatedFetch(API_ENDPOINTS.TICKETS.DISCOUNTS.LIST);
-      
-      if (!response.ok) throw new Error("Failed to fetch discounts");
-      
-      const data: Discount[] = await response.json();
+      // authenticatedFetch already returns parsed JSON data when successful
+      const data = await authenticatedFetch<Discount[]>(API_ENDPOINTS.TICKETS.DISCOUNTS.LIST);
       setDiscounts(data.filter((d: Discount) => d.visivel));
     } catch (error) {
-      console.error("Error:", error);
-      // A mensagem de erro de token será mostrada pelo authenticatedFetch
+      console.error("Error fetching discounts:", error);
+      // The authenticatedFetch utility will already handle token errors
+      toast.error("Failed to fetch discounts");
     }
   };
 
   React.useEffect(() => {
     fetchDiscounts();
   }, []);
+
+  // Calcular o valor total sempre que os dados são alterados
+  React.useEffect(() => {
+    const total = data.reduce((sum, p) => sum + (p.finalValue || 0), 0);
+    setTotalValue(total);
+  }, [data]);
 
   const calculateFinalValue = (value: number, discountId?: string) => {
     if (!discountId || discountId === "no-discount") return value;
@@ -123,12 +110,9 @@ const PaymentTable: React.FC<PaymentTableProps> = ({
     try {
       if (!selectedPayment) return;
 
-      // Usar API_ENDPOINTS ao invés da rota hardcoded
-      const response = await authenticatedFetch(API_ENDPOINTS.ADMIN.PAYMENTS.CONFIRM, {
+      // O authenticatedFetch já lida com o processamento de erros e retorna dados JSON
+      await authenticatedFetch<{ success: boolean }>(API_ENDPOINTS.ADMIN.PAYMENTS.CONFIRM, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify({
           ticketId: selectedPayment.ticketNumber,
           finalValue: calculatedValue || selectedPayment.finalValue,
@@ -136,11 +120,6 @@ const PaymentTable: React.FC<PaymentTableProps> = ({
             selectedDiscount !== "no-discount" ? selectedDiscount : undefined,
         } as ConfirmPaymentData),
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to confirm payment");
-      }
 
       toast.success("Payment confirmed successfully");
 
@@ -160,15 +139,21 @@ const PaymentTable: React.FC<PaymentTableProps> = ({
   const handleViewProof = async (proofUrl: string) => {
     try {
       const encodedFileName = encodeURIComponent(proofUrl);
-
-      // Usar API_ENDPOINTS ao invés da rota hardcoded
-      const response = await authenticatedFetch(
-        API_ENDPOINTS.TICKETS.PROOF_IMAGE(encodedFileName),
-        { method: "GET" }
-      );
+      
+      // Para imagens, precisamos usar fetch diretamente com o cabeçalho de autorização
+      // já que authenticatedFetch é otimizado para respostas JSON
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("Token não encontrado");
+      
+      const response = await fetch(API_ENDPOINTS.TICKETS.PROOF_IMAGE(encodedFileName), {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
 
       if (!response.ok) {
-        throw new Error("Failed to load proof image");
+        throw new Error(`Failed to load proof image: ${response.status}`);
       }
 
       const blob = await response.blob();
@@ -176,154 +161,101 @@ const PaymentTable: React.FC<PaymentTableProps> = ({
       setSelectedProofUrl(imageUrl);
       setProofDialogOpen(true);
     } catch (error) {
-      console.error("Error:", error);
-      if (!(error instanceof Error && error.message === "Token não encontrado")) {
-        toast.error("Failed to load proof image");
-      }
+      console.error("Error loading proof image:", error);
+      toast.error("Failed to load proof image");
     }
   };
 
-  // Get unique users for filter
-  const uniqueUsers = React.useMemo(() => {
-    return ["all", ...Array.from(new Set(data.map((p) => p.userName)))];
-  }, [data]);
-
-  // Filter and paginate data
-  const filteredData = React.useMemo(() => {
-    let filtered = data;
-    if (userFilter !== "all") {
-      filtered = data.filter((p) => p.userName === userFilter);
-    }
-
-    // Calculate total value
-    const total = filtered.reduce((sum, p) => sum + (p.finalValue || 0), 0);
-    setTotalValue(total);
-
-    // Paginate
-    const start = (currentPage - 1) * pageSize;
-    const end = start + pageSize;
-    return filtered.slice(start, end);
-  }, [data, userFilter, currentPage, pageSize]);
-
-  if (isLoading) {
-    return <div>Loading payments...</div>;
-  }
+  // Definindo as colunas para o DataTable
+  const columns: ColumnDef<Payment>[] = [
+    {
+      accessorKey: "ticketNumber",
+      header: "Ticket Number",
+      cell: ({ row }) => <div>{row.getValue("ticketNumber")}</div>,
+    },
+    {
+      accessorKey: "userName",
+      header: "User",
+      cell: ({ row }) => <div>{row.getValue("userName")}</div>,
+      filterFn: (row, id, value) => {
+        const val = row.getValue(id);
+        return typeof val === 'string' && val.toLowerCase().includes(value.toLowerCase());
+      },
+    },
+    {
+      accessorKey: "finalValue",
+      header: "Value",
+      cell: ({ row }) => {
+        const value = row.getValue<number>("finalValue");
+        return <div>R$ {value.toFixed(2)}</div>;
+      },
+    },
+    {
+      accessorKey: "discountApplied",
+      header: "Discount",
+    },
+    {
+      accessorKey: "repasse",
+      header: "Commission",
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }) => {
+        const payment = row.original;
+        return (
+          <div className="flex gap-2">
+            <Button
+              onClick={() => {
+                setSelectedPayment(payment);
+                setSelectedDiscount("no-discount");
+                setCalculatedValue(payment.finalValue);
+                setConfirmDialog(true);
+              }}
+            >
+              Confirm
+            </Button>
+            {payment.proofUrl && (
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => handleViewProof(payment.proofUrl as string)}
+              >
+                <Eye className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        );
+      },
+    },
+  ];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <Select value={userFilter} onValueChange={setUserFilter}>
-          <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="Filter by user" />
-          </SelectTrigger>
-          <SelectContent>
-            {uniqueUsers.map((user) => (
-              <SelectItem key={user} value={user}>
-                {user}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
+        <Input
+          placeholder="Filter by username..."
+          value={searchValue}
+          onChange={(e) => setSearchValue(e.target.value)}
+          className="w-[300px]"
+        />
         <div className="text-right">
           <p className="text-sm text-muted-foreground">Total Value</p>
           <p className="text-2xl font-bold">R$ {totalValue.toFixed(2)}</p>
         </div>
       </div>
 
-      <>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Ticket Number</TableHead>
-              <TableHead>User</TableHead>
-              <TableHead>Value</TableHead>
-              <TableHead>Discount</TableHead>
-              <TableHead>Commission</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredData.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center py-8">
-                  No payments found
-                </TableCell>
-              </TableRow>
-            ) : (
-              filteredData.map((payment) => (
-                <TableRow key={payment._id}>
-                  <TableCell>{payment.ticketNumber}</TableCell>
-                  <TableCell>{payment.userName}</TableCell>
-                  <TableCell>
-                    {payment.finalValue
-                      ? `R$ ${payment.finalValue.toFixed(2)}`
-                      : "N/A"}
-                  </TableCell>
-                  <TableCell>{payment.discountApplied}</TableCell>
-                  <TableCell>{payment.repasse}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={() => {
-                          setSelectedPayment(payment);
-                          setConfirmDialog(true);
-                        }}
-                      >
-                        Confirm
-                      </Button>
-                      {payment.proofUrl && (
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => handleViewProof(payment.proofUrl)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </>
-
-      <div className="flex justify-between items-center">
-        <Select
-          value={pageSize.toString()}
-          onValueChange={(value) => setPageSize(Number(value))}
-        >
-          <SelectTrigger className="w-[100px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {[10, 20, 30, 50].map((size) => (
-              <SelectItem key={size} value={size.toString()}>
-                {size} rows
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Pagination>
-          <PaginationContent>
-            <PaginationItem>
-              {currentPage > 1 && (
-                <PaginationPrevious
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                />
-              )}
-            </PaginationItem>
-            <PaginationItem>
-              {currentPage * pageSize < data.length && (
-                <PaginationNext onClick={() => setCurrentPage((p) => p + 1)} />
-              )}
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
-      </div>
+      <DataTable 
+        columns={columns} 
+        data={data}
+        isLoading={isLoading}
+        searchColumn="userName"
+        searchValue={searchValue}
+        onSearchChange={setSearchValue}
+        pageSize={10}
+        pageSizeOptions={[10, 20, 30, 50]}
+        ariaLabel="Payment table"
+      />
 
       {/* Confirm Dialog */}
       <Dialog open={confirmDialog} onOpenChange={setConfirmDialog}>

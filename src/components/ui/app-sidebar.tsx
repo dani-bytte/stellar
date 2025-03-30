@@ -19,6 +19,7 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import { useRouter } from "next/navigation";
+import { API_ENDPOINTS, LOCAL_STORAGE_KEYS } from "@/lib/constants";
 
 interface User {
   fullName: string;
@@ -54,14 +55,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       try {
         if (!mounted.current) return;
 
-        const token = localStorage.getItem("token");
-        const storedRole = localStorage.getItem("role");
-        const hasProfile = localStorage.getItem("hasProfile") === "true";
+        const token = localStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN);
+        const storedRole = localStorage.getItem(LOCAL_STORAGE_KEYS.ROLE);
+        const hasProfile = localStorage.getItem(LOCAL_STORAGE_KEYS.HAS_PROFILE) === "true";
         const isTemporaryPassword =
-          localStorage.getItem("isTemporaryPassword") === "true";
+          localStorage.getItem(LOCAL_STORAGE_KEYS.IS_TEMPORARY_PASSWORD) === "true";
 
         if (!token || !storedRole) {
-          router.push("/auth/login");
+          router.push(API_ENDPOINTS.AUTH.LOGIN);
           return;
         }
 
@@ -77,7 +78,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         }
 
         // Only fetch profile if all checks pass
-        const response = await fetch("/api/home/profile", {
+        const response = await fetch(API_ENDPOINTS.PROFILE.GET, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
